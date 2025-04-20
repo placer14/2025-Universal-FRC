@@ -52,15 +52,6 @@ public class MotorSparkMax extends SubsystemBase {
         myMotorSpark(motorC.name, motorC.id, motorC.followID, motorC.logging);
     }
 
-    // public MotorSpark(String name, int id, int followId, boolean brakeMode, boolean invert) {
-    //     motorC = new MotorConfigs(MotorTypes.SparkFlexMaxMotion);
-    //     motorC.name = name;
-    //     motorC.id = id;
-    //     motorC.followID = followId;
-    //     motorC.inverted = invert;
-    //     myMotorSpark(name, id, followId, false);
-    // }
-
     public MotorSparkMax(String name, int id, int followId, boolean brakeMode, boolean invert, MotorConfigs motorC) {
         this.motorC = motorC;
         motorC.name = name;

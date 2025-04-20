@@ -16,18 +16,16 @@ import frc.robot.subsystems.MotorConfigs.MotorTypes;
 public class TestBlondeMotors extends SubsystemBase {
 
     private MotorSparkMax motorMax;
-    private NeoMotor neoMotor;
     private XboxController driveHID;
     private int lastPov = -1;
-    private MotorConfigs motorC = new MotorConfigs(MotorTypes.SparkFlexSmartMotion);
     private LedSubsystem leds;
+    private MotorConfigs motorC = new MotorConfigs(MotorTypes.SparkFlexSmartMotion);
 
     public TestBlondeMotors(XboxController driveHID, LedSubsystem leds) {
-        neoMotor = new NeoMotor(driveHID); 
         this.driveHID = driveHID;
         this.leds = leds;
         logf("Start of Test Motors Subsystem for blonde Mini\n");
-       // motorMax = new MotorSparkMax("Max", 1, -1, true, false, motorC);
+        motorMax = new MotorSparkMax("Max", 1, -1, true, false, motorC);
     }
 
     public void resetPos() {

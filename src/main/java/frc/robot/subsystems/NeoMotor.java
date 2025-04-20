@@ -1,16 +1,13 @@
 package frc.robot.subsystems;
+import static frc.robot.utilities.Util.logf;
+
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+//import com.revrobotics.spark.ClosedLoopSlot.pid ; 
 import com.revrobotics.spark.SparkMax;
 
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
-import com.revrobotics.spark.SparkBase;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
-//import com.revrobotics.spark.ClosedLoopSlot.pid ; 
-
-
-import static frc.robot.utilities.Util.logf;
 
 public class NeoMotor extends SubsystemBase {
     private SparkMax m_motor;
