@@ -4,11 +4,12 @@ import static frc.robot.utilities.Util.logf;
 import static frc.robot.utilities.Util.round2;
 
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLimitSwitch;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
@@ -16,7 +17,9 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Robot;
+import frc.robot.RobotContainer;
 
 /**
  * SPARK MAX controllers are initialized over CAN by constructing a SparkMax
@@ -84,6 +87,11 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
                     motor.getFirmwareString());
     }
 
+    public void setLogging(boolean value) {
+        logf("Set Flex Logging:%b\n", value);
+        myLogging = value;
+    }
+
     public void enableLimitSwitch(boolean forward, boolean reverse) {
     };
 
@@ -126,6 +134,7 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
 
     // Config the sensor used for Primary PID and sensor direction
     public void setPositionPID(int pidIdx, PID pid) {
+
     };
 
     public void setRampClosedLoop(double rate) {
@@ -209,10 +218,7 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
 
     public void setPos(double position) {
         lastDesiredPosition = position;
-        // logf("-------- Set motor %s at %.1f ticks\n", name, lastDesiredPosition);
-        // motor.getClosedLoopController().setReference(position,
-        // ControlType.kMAXMotionPositionControl);
-        motor.getClosedLoopController().setReference(position, motorC.controlType);
+        motor.getClosedLoopController().setReference(position, ControlType.kPosition);
     }
 
     public void zeroEncoder() {
@@ -233,18 +239,20 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
 
     public void logPeriodic() {
         double pos = getPos();
-        if (pos != lastPos) {
+        if (Math.abs(pos - lastPos) > .05) {
             lastPos = pos;
             if (myLogging) {
                 if (followId > 0) {
-                    logf(getMotorVCS(motor) + getMotorVCS(followMotor));
+                    logMotorVCS();
+                    logMotorVCS(followMotor);
                 } else {
-                    logf(getMotorVCS(motor));
+                    logMotorVCS();
                 }
             }
         }
     }
 
+    @Override
     public void periodic() {
         if (Robot.count % 10 == 0) {
             SmartDashboard.putNumber(name + " Pos", getPos());
@@ -253,7 +261,104 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
             SmartDashboard.putNumber(name + " Vel", round2(getSpeed()));
             SmartDashboard.putNumber(name + " RPM", round2(getSpeed() / motorC.velocityConversionFactor / 60));
             logPeriodic();
+            testCases();
         }
+    }
+
+    enum Modes {
+        SPEED, POSTION, VELOCITY, MOTIONMAGIC
+    }
+
+    Modes mode = Modes.SPEED;
+
+    void testCases() {
+        double kP, kI, kD, kIz, kFF;
+        SparkMaxConfig config;
+        double value;
+        CommandXboxController driveController = RobotContainer.driveController;
+        if (driveController.start().getAsBoolean()) {
+            motor.stopMotor();
+            switch (mode) {
+                case SPEED:
+                    // Setup for testing the position PID
+                    mode = Modes.POSTION;
+                    config = new SparkMaxConfig();
+                    kP = 0.1;
+                    kI = 1e-4;
+                    kD = 1;
+                    kIz = 0;
+                    kFF = 0;
+                    config.closedLoop.pidf(kP, kI, kD, kFF);
+                    config.closedLoop.iZone(kIz);
+                    break;
+                case POSTION:
+                    // Setup for testing the velocity PID
+                    mode = Modes.VELOCITY;
+                    config = new SparkMaxConfig();
+                    kP = 6e-5;
+                    kI = 0;
+                    kD = 0;
+                    kIz = 0;
+                    kFF = 0.000015;
+                    config.closedLoop.pidf(kP, kI, kD, kFF);
+                    config.closedLoop.iZone(kIz);
+                    break;
+                case VELOCITY:
+                    mode = Modes.MOTIONMAGIC;
+                    break;
+                case MOTIONMAGIC:
+                    mode = Modes.SPEED;
+                    break;
+            }
+            logf("New Test Mode:%s\n", mode);
+        }
+        switch (mode) {
+            case SPEED:
+                value = driveController.getLeftTriggerAxis();
+                if (value > .05) {
+                    if (driveController.getHID().getLeftBumper())
+                        value = -value;
+                    setSpeed(value);
+                } else {
+                    stopMotor();
+                }
+                break;
+            case POSTION:
+                value = driveController.getHID().getPOV() / 45.0;
+                if (value >= 0.0) {
+                    setPos(value);
+                    logf("Flex set position:%.2f\n", value);
+                }
+                break;
+            case VELOCITY:
+                value = driveController.getHID().getPOV();
+                if (value >= 0.02) {
+                    setVelocity(value);
+                    logf("Flex set velocity:%.2f\n", value);
+                }
+                break;
+            case MOTIONMAGIC:
+                break;
+
+        }
+
+        // double value = driveController.getRightTriggerAxis();
+        // if (Math.abs(value) > .02) {
+        // setSpeed(value);
+        // }
+        // if (driveController.povUp().getAsBoolean()) {
+        // setVelocity(10);
+        // }
+        // if (driveController.povDown().getAsBoolean()) {
+        // setVelocity(0);
+        // }
+        // if (driveController.povRight().getAsBoolean()) {
+        // setPos(2);
+        // }
+        // if (driveController.povLeft().getAsBoolean()) {
+        // setPos(0);
+        // }
+
     }
 
     void testTimes() {
@@ -283,33 +388,26 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
         }
     }
 
-    private String getMotorVCS(SparkFlex motor) {
+    public void logMotorVCS() {
         if (Math.abs(lastSpeed) > .02) {
             double bussVoltage = motor.getBusVoltage();
             double outputCurrent = motor.getOutputCurrent();
-            return String.format("%s motor volts:%.2f cur:%.2f power:%.2f sp:%.3f", name, bussVoltage,
+            logf("%s motor volts:%.2f cur:%.2f power:%.2f sp:%.3f\n", name, bussVoltage,
                     outputCurrent, bussVoltage * outputCurrent, lastSpeed);
         }
-        return name + "Not Running";
+    }
+
+    public void logMotorVCS(SparkFlex motor) {
+        if (Math.abs(lastSpeed) > .02) {
+            double bussVoltage = motor.getBusVoltage();
+            double outputCurrent = motor.getOutputCurrent();
+            logf("%s motor volts:%.2f cur:%.2f power:%.2f sp:%.3f\n", name, bussVoltage,
+                    outputCurrent, bussVoltage * outputCurrent, lastSpeed);
+        }
     }
 
     public double getLastSpeed() {
         return motor.getAbsoluteEncoder().getVelocity();
-    }
-
-    public void logMotorVCS() {
-        // if (Math.abs(motor.get()) < .01)
-        // logf("%s motor not Running\n", name);
-        if (Math.abs(getLastSpeed()) > .01) {
-            if (followId > 0) {
-                logf("%s motor volts<%.2f,%.2f> cur<%.2f,%.2f> sp<%.2f,%.2f>\n", name, motor.getBusVoltage(),
-                        followMotor.getBusVoltage(), motor.getOutputCurrent(), followMotor.getOutputCurrent(),
-                        motor.get(), followMotor.get());
-            } else {
-                logf("%s motor volts:%.2f cur:%.2f sp:%.2f\n", name, motor.getBusVoltage(), motor.getOutputCurrent(),
-                        motor.get());
-            }
-        }
     }
 
     public void logAllMotor() {

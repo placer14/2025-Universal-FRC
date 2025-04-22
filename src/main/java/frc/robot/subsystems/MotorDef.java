@@ -17,6 +17,8 @@ public interface MotorDef {
 
     public void setInverted(boolean invert);
 
+    public void setLogging(boolean value);
+
     public double getLastSpeed();
 
     public double getActualVelocity();

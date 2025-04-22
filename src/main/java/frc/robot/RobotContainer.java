@@ -7,17 +7,20 @@ import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Config.RobotType;
 import frc.robot.subsystems.DrivetrainSRX;
 import frc.robot.subsystems.LedSubsystem;
+import frc.robot.subsystems.MotorConfigs;
+import frc.robot.subsystems.MotorFlex;
 import frc.robot.subsystems.NeoMotor;
 import frc.robot.subsystems.TestMiniMotors;
 import frc.robot.subsystems.TestBlondeMotors;
-//import frc.robot.subsystems.YawProvider;
 import frc.robot.subsystems.TestTriggers;
+import frc.robot.subsystems.MotorConfigs.MotorTypes;
 
 /**
  * This class is where the bulk of the robot should be declared. Since
@@ -29,9 +32,11 @@ import frc.robot.subsystems.TestTriggers;
  * subsystems, commands, and button mappings) should be declared here.
  */
 public class RobotContainer {
-    private final static CommandXboxController driveController = new CommandXboxController(2);
-    //private final static CommandXboxController operatorController = new CommandXboxController(3);
-    //private final static XboxController operatorHID = operatorController.getHID();
+    public final static CommandXboxController driveController = new CommandXboxController(2);
+    // private final static CommandXboxController operatorController = new
+    // CommandXboxController(3);
+    // private final static XboxController operatorHID =
+    // operatorController.getHID();
     private final static XboxController driveHID = driveController.getHID();
 
     private static LedSubsystem leds = new LedSubsystem();
@@ -50,21 +55,22 @@ public class RobotContainer {
             case Simulation:
                 break;
             case blondeMini:
-                 new DrivetrainSRX(driveHID);
-                 new NeoMotor(driveHID);
-                 //new TestBlondeMotors(driveHID, leds);
-                //new TestSlider(driveHID, leds);
+                new DrivetrainSRX(driveHID);
+                new NeoMotor(driveHID);
+                // new TestBlondeMotors(driveHID, leds);
+                // new TestSlider(driveHID, leds);
                 break;
             case MiniSRX: // Test mini
                 // Use Talon SRX for drive train
                 drivetrainSRX = new DrivetrainSRX(driveHID);
-                // MotorDef motor = new MotorSRX(null, 0, 0, false);
-                this.testMiniMotors = new TestMiniMotors(driveHID, leds);
-                leds.setColors(0, 128, 0);
-                break;
-            case Squidward: // Holiday Present Robot
-                // Uses Talon SRX for drive train
-                break;
+                // Setup to test Flex Motor
+                MotorConfigs conf = new MotorConfigs(MotorTypes.SparkFlexMaxMotion);
+                MotorFlex motor = new MotorFlex("TestFlex", 10, -1, false, false, conf);
+                motor.setLogging(true);
+                Command l = Commands.run(() -> motor.setSpeed(driveController.getLeftTriggerAxis()), motor);
+                driveController.start().onTrue(l);
+            case Squidward:
+                // Uses Talon SRX for drive train())
             case Kevin: // Ginger Bread Robot
                 // Uses Talon SRX for drive train
                 break;
@@ -76,11 +82,16 @@ public class RobotContainer {
                 // Use SparkMax motors for drive train
                 break;
         }
-        logf("Creating RobotContainer\n");
+        logf("FInished Creating RobotContainer\n");
         if (Config.robotType != RobotType.Simulation) {
             configureButtonBindings();
         }
     }
+
+    // private Command controlFlex(MotorDef motor) {
+    // return Commands.run(() ->
+    // motor.setSpeed(driveController.getLeftTriggerAxis()));
+    // }
 
     public void testLeds() {
         leds.setColors(0, 127, 0);
@@ -90,12 +101,14 @@ public class RobotContainer {
         return (v < 0) ? -(v * v) : (v * v);
     }
 
-    // Command zy = new InstantCommand(new Runnable() {
-    // public void run() {
-    // Robot.yawProvider.zeroYaw();
-    // testMotors.resetPos();
-    // }
-    // });
+    // The following code is an attempt to learn how to program commands
+
+    Command zy = new InstantCommand(new Runnable() {
+        public void run() {
+            Robot.yawProvider.zeroYaw();
+            // testMotors.resetPos();
+        }
+    });
 
     Command testCmd = new InstantCommand(new Runnable() {
         public void run() {
@@ -112,7 +125,7 @@ public class RobotContainer {
     Trigger tr = new Trigger(triggers::getSwitch);
 
     private void configureButtonBindings() {
-        //operatorHID.getAButton(); // Avoids a not used problem
+        // operatorHID.getAButton(); // Avoids a not used problem
         driveController.x().onTrue(testCmd);
         driveController.back().whileTrue(new InstantCommand(new Runnable() {
             public void run() {
@@ -126,12 +139,11 @@ public class RobotContainer {
 
     // Initializes a DigitalInput
     DigitalInput input = new DigitalInput(8);
+    // Creates a Debouncer in "both" mode.
+    Debouncer m_debouncer = new Debouncer(0.1, Debouncer.DebounceType.kBoth);
 
     void deB() {
-        // Creates a Debouncer in "both" mode.
-        Debouncer m_debouncer = new Debouncer(0.1, Debouncer.DebounceType.kBoth);
-        // So if currently false the signal must go true for at least .1 seconds before
-        // being read as a True signal.
+        // If false the signal must go true for at least .1 seconds before read
         if (m_debouncer.calculate(input.get())) {
             logf("Input Changed:%b\n", input.get());
         }

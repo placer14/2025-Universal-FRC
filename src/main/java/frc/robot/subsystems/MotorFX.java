@@ -34,6 +34,7 @@ public class MotorFX extends SubsystemBase implements MotorDef {
     private int followId;
     private double lastSpeed = 0;
     private double lastPos = 0;
+    private boolean myLogging = false;
     public ErrorCode errorCode;
     public ErrorCode errorCodeFollow;
     /* Start at position 0, use slot 0 */
@@ -82,12 +83,15 @@ public class MotorFX extends SubsystemBase implements MotorDef {
         else
             logf("Created %s motor id:%d firmware:%d voltage:%.1f\n", name, id, motor.getVersion(),
                     motor.getMotorVoltage());
-
     }
 
     public String getName() {
         return name;
     }
+
+    public void setLogging(boolean value) {
+        myLogging = value;
+    }   
 
     public double getPos() {
         return motor.getRotorPosition().getValueAsDouble();
@@ -122,8 +126,7 @@ public class MotorFX extends SubsystemBase implements MotorDef {
     }
 
     public void setPos(double position) {
-        // TODO Need to fix this
-        // motor.set(ControlMode.Position, position);
+      
     }
 
     public void setInverted(boolean invert) {
@@ -167,7 +170,7 @@ public class MotorFX extends SubsystemBase implements MotorDef {
     public void periodic() {
         if (!Robot.config.showMotorData)
             return;
-        if (count % 50 == 0 && Robot.debug) {
+        if (count % 50 == 0 && myLogging) {
             logPeriodic();
         }
         if (count % 500 == 0)

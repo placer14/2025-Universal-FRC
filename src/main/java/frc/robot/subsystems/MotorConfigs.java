@@ -30,7 +30,7 @@ public class MotorConfigs {
         SparkFlexSmartMotion, SparkFlexMaxMotion, 
     }
 
-    MotorConfigs(MotorTypes type) {
+    public MotorConfigs(MotorTypes type) {
         switch (type) {
             case SparkFlexMaxMotion:
                 kP = .14;

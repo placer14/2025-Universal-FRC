@@ -64,6 +64,10 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
 
     }
 
+    public void setLogging(boolean value) {
+        myLogging = value;
+    }   
+
     public double getPos() {
         return motor.getSelectedSensorPosition();
     }
