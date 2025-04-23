@@ -16,6 +16,7 @@ import frc.robot.subsystems.DrivetrainSRX;
 import frc.robot.subsystems.LedSubsystem;
 import frc.robot.subsystems.MotorConfigs;
 import frc.robot.subsystems.MotorFlex;
+import frc.robot.subsystems.MotorSRX;
 import frc.robot.subsystems.NeoMotor;
 import frc.robot.subsystems.TestMiniMotors;
 import frc.robot.subsystems.TestBlondeMotors;
@@ -45,7 +46,17 @@ public class RobotContainer {
     public TestBlondeMotors testblondeMotors;
 
     private TestTriggers triggers = new TestTriggers();
-
+    private double setSpeedFromTrigger(){
+        double leftValue = driveController.getLeftTriggerAxis();
+        double rightValue = driveController.getRightTriggerAxis();
+        if (leftValue > 0.05){
+            return leftValue;
+        }
+        if (rightValue > 0.05){
+            return -rightValue;
+        }
+        return 0.0; 
+    }
     /**
      * The container for the robot. Contains subsystems, OI devices, and commands.
      */
@@ -54,11 +65,22 @@ public class RobotContainer {
         switch (Config.robotType) {
             case Simulation:
                 break;
-            case blondeMini:
+            case BlondeMini:
                 new DrivetrainSRX(driveHID);
                 new NeoMotor(driveHID);
                 // new TestBlondeMotors(driveHID, leds);
                 // new TestSlider(driveHID, leds);
+                break;
+            case DarrylMini:
+                new DrivetrainSRX(driveHID);
+                MotorSRX dmotor = new MotorSRX("DarrylSRX", 10, -1, true);
+                Command darrylMoveBack = Commands.run(() -> dmotor.setSpeed(setSpeedFromTrigger()), dmotor);
+                driveController.start().onTrue(darrylMoveBack); 
+                break;
+            case MiniMini:
+                MotorSRX mmmotor = new MotorSRX("MiniSRX", 10, -1, true);
+                Command miniMove = Commands.run(() -> mmmotor.setSpeed(driveController.getLeftTriggerAxis()), mmmotor);
+                driveController.start().onTrue(miniMove);
                 break;
             case MiniSRX: // Test mini
                 // Use Talon SRX for drive train
@@ -78,6 +100,7 @@ public class RobotContainer {
                 // Uses Jaguars for drive train and shooter
                 // Uses PCM to control shooter tilt and shooter activate
                 break;
+
             case Mando: // Train engine
                 // Use SparkMax motors for drive train
                 break;

@@ -127,7 +127,7 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
         if (count % 50 == 0 && Robot.debug) {
             logPeriodic();
         }
-        if (count % 100 == 0)
+        if (count % 10 == 0)
             updateSmart();
     }
 
