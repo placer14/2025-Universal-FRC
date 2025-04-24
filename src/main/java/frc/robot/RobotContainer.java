@@ -68,14 +68,21 @@ public class RobotContainer {
             case Simulation:
                 break;
             case BlondeMini:
-                new DrivetrainSRX(driveHID);
-                new NeoMotor(driveHID);
+                new DrivetrainSRX(driveHID); 
+                boolean testSmartMaxBlonde = true;
+                if (testSmartMaxBlonde) {
+                    MotorSparkMax motor = new MotorSparkMax("TestMax", 20, -1, false, false);
+                    motor.setLogging(true);
+                    motor.setTestMode(true);
+                }
+
+                //new NeoMotor(driveHID);
                 break;
             case DarrylMini:
                 new DrivetrainSRX(driveHID);
                 MotorSRX dmotor = new MotorSRX("DarrylSRX", 10, -1, true);
                 Command darrylMoveBack = Commands.run(() -> dmotor.setSpeed(getSpeedFromTriggers()), dmotor);
-                driveController.start().onTrue(darrylMoveBack);
+                darrylMoveBack.ignoringDisable(true).schedule();
                 break;
             case MiniMini:
                 MotorSRX mmmotor = new MotorSRX("MiniSRX", 10, -1, true);
@@ -107,9 +114,11 @@ public class RobotContainer {
                 miniCancoder.ignoringDisable(true).schedule();
                 //driveController.back().onTrue(miniCancoder);
             case Squidward:
+                drivetrainSRX = new DrivetrainSRX(driveHID);
                 // Uses Talon SRX for drive train())
             case Kevin: // Ginger Bread Robot
                 // Uses Talon SRX for drive train
+                drivetrainSRX = new DrivetrainSRX(driveHID);
                 break;
             case Wooly: // Big ball shooter
                 // Uses Jaguars for drive train and shooter
@@ -120,7 +129,7 @@ public class RobotContainer {
                 // Use SparkMax motors for drive train
                 break;
         }
-        logf("FInished Creating RobotContainer\n");
+        logf("Finished Creating RobotContainer\n");
         if (Config.robotType != RobotType.Simulation) {
             configureButtonBindings();
         }

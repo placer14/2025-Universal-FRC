@@ -267,12 +267,12 @@ public class MotorSparkMax extends SubsystemBase {
 
     public void periodic() {
         if (Robot.count % 10 == 0) {
-            SmartDashboard.putNumber(name + " Pos", getPos());
-            SmartDashboard.putNumber(name + " Revs", getPos() / positionConversionFactor);
-            SmartDashboard.putNumber(name + " Cur", round2(motor.getOutputCurrent()));
-            SmartDashboard.putNumber(name + " Vel", round2(getSpeed()));
-            SmartDashboard.putString("Mode", mode.toString());
-            SmartDashboard.putNumber(name + " RPM", round2(getSpeed() / velocityConversionFactor / 60));
+            SmartDashboard.putNumber(name + " Pos", getPos());  // display position in rotations
+            SmartDashboard.putNumber(name + " Revs", getPos() / positionConversionFactor); //display position based on conversion factor
+            SmartDashboard.putNumber(name + " Cur", round2(motor.getOutputCurrent())); //display motor current
+            SmartDashboard.putNumber(name + " Vel", round2(getSpeed())); //display speed in  revolutions per minute
+            SmartDashboard.putString("Mode", mode.toString()); //display mode 
+            SmartDashboard.putNumber(name + " RPM", round2(getSpeed() / velocityConversionFactor / 60)); //display speed in  revolutions per minute
             logPeriodic();
             if (testMode)
                 testCases();
