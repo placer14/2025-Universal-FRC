@@ -25,8 +25,6 @@ public interface MotorDef {
 
     public void forcePercentMode();
 
-    // void periodic();
-
     public void logPeriodic();
 
     /*

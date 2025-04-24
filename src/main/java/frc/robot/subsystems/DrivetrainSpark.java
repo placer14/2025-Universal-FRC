@@ -12,7 +12,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Config;
 import frc.robot.Config.DriveType;
-import frc.robot.subsystems.MotorConfigs.MotorTypes;
 import frc.robot.Robot;
 
 public class DrivetrainSpark extends SubsystemBase {
@@ -20,8 +19,6 @@ public class DrivetrainSpark extends SubsystemBase {
     private MotorSparkMax rightMotor;
 
     private MotorSparkMax leftMotor;
-    MotorConfigs motorConfRight = new MotorConfigs(MotorTypes.SparkFlexMaxMotion);
-    MotorConfigs motorConfLeft = new MotorConfigs(MotorTypes.SparkFlexMaxMotion);
 
     private double rightSpeed = 0;
     private double leftSpeed = 0;
@@ -52,12 +49,10 @@ public class DrivetrainSpark extends SubsystemBase {
     Pose2d pose;
     Pose2d lastPose;
 
-    private MotorConfigs motorC = new MotorConfigs(MotorTypes.SparkFlexSmartMotion);
-
     public DrivetrainSpark(XboxController driveHID) {
         this.driveHID = driveHID;
-        rightMotor = new MotorSparkMax("Right", Robot.config.driveRight,Robot.config.driveRightFollow, true, false, motorC);
-        leftMotor = new MotorSparkMax("Left", Robot.config.driveLeft,Robot.config.driveLeftFollow, true, true, motorC);
+        rightMotor = new MotorSparkMax("Right", Robot.config.driveRight, Robot.config.driveRightFollow, true, false);
+        leftMotor = new MotorSparkMax("Left", Robot.config.driveLeft,Robot.config.driveLeftFollow, true, true);
         rightMotor.zeroEncoder();
         leftMotor.zeroEncoder();
     }

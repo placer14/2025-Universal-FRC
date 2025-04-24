@@ -6,22 +6,27 @@ import static frc.robot.utilities.Util.logf;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Config.RobotType;
 import frc.robot.subsystems.DrivetrainSRX;
 import frc.robot.subsystems.LedSubsystem;
-import frc.robot.subsystems.MotorConfigs;
+//import frc.robot.subsystems.MotorConfigs;
 import frc.robot.subsystems.MotorFlex;
 import frc.robot.subsystems.MotorSRX;
+import frc.robot.subsystems.MotorSparkMax;
 import frc.robot.subsystems.NeoMotor;
-import frc.robot.subsystems.TestMiniMotors;
-import frc.robot.subsystems.TestBlondeMotors;
+//import frc.robot.subsystems.TestMiniMotors;
+//import frc.robot.subsystems.TestBlondeMotors;
 import frc.robot.subsystems.TestTriggers;
-import frc.robot.subsystems.MotorConfigs.MotorTypes;
+//import frc.robot.subsystems.MotorConfigs.MotorTypes;
+import com.ctre.phoenix6.hardware.CANcoder;
 
 /**
  * This class is where the bulk of the robot should be declared. Since
@@ -34,29 +39,26 @@ import frc.robot.subsystems.MotorConfigs.MotorTypes;
  */
 public class RobotContainer {
     public final static CommandXboxController driveController = new CommandXboxController(2);
-    // private final static CommandXboxController operatorController = new
-    // CommandXboxController(3);
-    // private final static XboxController operatorHID =
-    // operatorController.getHID();
     private final static XboxController driveHID = driveController.getHID();
 
     private static LedSubsystem leds = new LedSubsystem();
     public DrivetrainSRX drivetrainSRX;
-    public TestMiniMotors testMiniMotors;
-    public TestBlondeMotors testblondeMotors;
 
     private TestTriggers triggers = new TestTriggers();
-    private double setSpeedFromTrigger(){
+    private CANcoder canCoder;
+
+    public double getSpeedFromTriggers() {
         double leftValue = driveController.getLeftTriggerAxis();
         double rightValue = driveController.getRightTriggerAxis();
-        if (leftValue > 0.05){
+        if (leftValue > 0.05) {
             return leftValue;
         }
-        if (rightValue > 0.05){
+        if (rightValue > 0.05) {
             return -rightValue;
         }
-        return 0.0; 
+        return 0.0;
     }
+
     /**
      * The container for the robot. Contains subsystems, OI devices, and commands.
      */
@@ -68,29 +70,42 @@ public class RobotContainer {
             case BlondeMini:
                 new DrivetrainSRX(driveHID);
                 new NeoMotor(driveHID);
-                // new TestBlondeMotors(driveHID, leds);
-                // new TestSlider(driveHID, leds);
                 break;
             case DarrylMini:
                 new DrivetrainSRX(driveHID);
                 MotorSRX dmotor = new MotorSRX("DarrylSRX", 10, -1, true);
-                Command darrylMoveBack = Commands.run(() -> dmotor.setSpeed(setSpeedFromTrigger()), dmotor);
-                driveController.start().onTrue(darrylMoveBack); 
+                Command darrylMoveBack = Commands.run(() -> dmotor.setSpeed(getSpeedFromTriggers()), dmotor);
+                driveController.start().onTrue(darrylMoveBack);
                 break;
             case MiniMini:
                 MotorSRX mmmotor = new MotorSRX("MiniSRX", 10, -1, true);
                 Command miniMove = Commands.run(() -> mmmotor.setSpeed(driveController.getLeftTriggerAxis()), mmmotor);
                 driveController.start().onTrue(miniMove);
+                new ScheduleCommand(miniMove);
+             
                 break;
             case MiniSRX: // Test mini
                 // Use Talon SRX for drive train
                 drivetrainSRX = new DrivetrainSRX(driveHID);
                 // Setup to test Flex Motor
-                MotorConfigs conf = new MotorConfigs(MotorTypes.SparkFlexMaxMotion);
-                MotorFlex motor = new MotorFlex("TestFlex", 10, -1, false, false, conf);
-                motor.setLogging(true);
-                Command l = Commands.run(() -> motor.setSpeed(driveController.getLeftTriggerAxis()), motor);
-                driveController.start().onTrue(l);
+                boolean testFlex = false;
+                if (testFlex) {
+                    MotorFlex motor = new MotorFlex("TestFlex", 10, -1, false);
+                    motor.setLogging(true);
+                    motor.setTestMode(true);
+                }
+                boolean testSmartMax = true;
+                if (testSmartMax) {
+                    MotorSparkMax motor = new MotorSparkMax("TestMax", 11, -1, false, false);
+                    motor.setLogging(true);
+                    motor.setTestMode(true);
+                }
+                // Command miniSRXMove = Commands.run(() ->
+                // motor.setSpeed(getSpeedFromTriggers()), motor);
+                canCoder = new CANcoder(20);
+                Command miniCancoder = Commands.run(() -> SmartDashboard.putNumber("CanCo", canCoder.getPosition().getValueAsDouble()));
+                miniCancoder.ignoringDisable(true).schedule();
+                //driveController.back().onTrue(miniCancoder);
             case Squidward:
                 // Uses Talon SRX for drive train())
             case Kevin: // Ginger Bread Robot
