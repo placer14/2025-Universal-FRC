@@ -122,14 +122,14 @@ public class MotorSparkMax extends SubsystemBase {
                 // loop slot, as it will default to slot 0.
                 .p(0.2)  // was .2
                 .i(0)
-                .d(1)  // was 1
+                .d(2)  // was 1
                 .outputRange(-1, 1);
 
         motorConfig.closedLoop
                 // Set PID values for velocity control in slot 1
-                .p(0.0001, ClosedLoopSlot.kSlot1)
+                .p(0.001, ClosedLoopSlot.kSlot1)
                 .i(0, ClosedLoopSlot.kSlot1)
-                .d(0, ClosedLoopSlot.kSlot1)
+                .d(0.015, ClosedLoopSlot.kSlot1)
                 .velocityFF(1.0 / 5767, ClosedLoopSlot.kSlot1)
                 .outputRange(-1, 1, ClosedLoopSlot.kSlot1);
 
@@ -355,13 +355,15 @@ public class MotorSparkMax extends SubsystemBase {
                 if (value >= 0.0) {
                     setPos(value);
                     logf("Flex set position:%.6f\n", value);
+                    SmartDashboard.putNumber("SetP", value);
                 }
                 break;
             case VELOCITY:
-                value = driveController.getHID().getPOV() * 20;
-                if (value >= 0) {
+                value = driveController.getHID().getPOV() * 20.0;
+                if (value >= 0.0) {
                     setVelocity(value);
                     logf("Flex set velocity:%.2f\n", value);
+                    SmartDashboard.putNumber("SetV", value);
                 }
                 break;
             case MOTIONMAGIC:
