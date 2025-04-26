@@ -273,6 +273,7 @@ public class MotorSparkMax extends SubsystemBase {
             SmartDashboard.putNumber(name + " Vel", round2(getSpeed()));
             SmartDashboard.putString("Mode", mode.toString());
             SmartDashboard.putNumber(name + " RPM", round2(getSpeed() / velocityConversionFactor / 60));
+
             logPeriodic();
             if (testMode)
                 testCases();
