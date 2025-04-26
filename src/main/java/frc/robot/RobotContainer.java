@@ -4,11 +4,11 @@ package frc.robot;
 import static frc.robot.utilities.Util.logf;
 
 import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ScheduleCommand;
@@ -23,7 +23,6 @@ import frc.robot.subsystems.LedSubsystem;
 import frc.robot.subsystems.MotorFlex;
 import frc.robot.subsystems.MotorSRX;
 import frc.robot.subsystems.MotorSparkMax;
-import frc.robot.subsystems.NeoMotor;
 //import frc.robot.subsystems.TestMiniMotors;
 //import frc.robot.subsystems.TestBlondeMotors;
 import frc.robot.subsystems.TestTriggers;
@@ -90,11 +89,15 @@ public class RobotContainer {
                 Command darrylMoveBack = Commands.run(() -> dmotor.setSpeed(getSpeedFromTriggers()), dmotor);
                 darrylMoveBack.ignoringDisable(true).schedule();
                 break;
-            case MiniMini:
-                MotorSRX mmmotor = new MotorSRX("MiniSRX", 10, -1, true);
-                Command miniMove = Commands.run(() -> mmmotor.setSpeed(driveController.getLeftTriggerAxis()), mmmotor);
-                driveController.start().onTrue(miniMove);
-                new ScheduleCommand(miniMove);
+            case MiniMini: 
+                MotorSRX redMotor = new MotorSRX("MiniSRX", 10, -1, true);
+                SlewRateLimiter redSlew = new SlewRateLimiter(0.5);
+                Command redDriveCmd = Commands.run(() -> redMotor.setSpeed(redSlew.calculate(driveController.getLeftTriggerAxis())), redMotor);
+                MotorFlex flexMotor = new MotorFlex("MiniFlex", 3, -1, true);
+                SlewRateLimiter flexSlew = new SlewRateLimiter(0.5);
+                Command flexDriveCmd = Commands.run(() -> flexMotor.setSpeed(flexSlew.calculate(driveController.getRightTriggerAxis())), flexMotor);
+
+                Commands.parallel(redDriveCmd, flexDriveCmd).ignoringDisable(true).schedule();
                 break;
             case MiniSRX: // Test mini
                 // Use Talon SRX for drive train
