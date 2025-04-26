@@ -15,7 +15,9 @@ import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Config.RobotType;
+import frc.robot.subsystems.DrivetrainJaguar;
 import frc.robot.subsystems.DrivetrainSRX;
+import frc.robot.subsystems.DrivetrainSpark;
 import frc.robot.subsystems.LedSubsystem;
 //import frc.robot.subsystems.MotorConfigs;
 import frc.robot.subsystems.MotorFlex;
@@ -69,11 +71,15 @@ public class RobotContainer {
                 break;
             case BlondeMini:
                 new DrivetrainSRX(driveHID); 
-                boolean testSmartMaxBlonde = true;
+                boolean testSmartMaxBlonde =true;
+                MotorSparkMax motor = new MotorSparkMax("TestMax", 20, -1, false, false);
                 if (testSmartMaxBlonde) {
-                    MotorSparkMax motor = new MotorSparkMax("TestMax", 20, -1, false, false);
+                    
                     motor.setLogging(true);
                     motor.setTestMode(true);
+                } else{
+                    Command blondeMove = Commands.run(() -> motor.setSpeed(getSpeedFromTriggers()), motor);
+                    blondeMove.ignoringDisable(true).schedule();
                 }
 
                 //new NeoMotor(driveHID);
@@ -89,7 +95,6 @@ public class RobotContainer {
                 Command miniMove = Commands.run(() -> mmmotor.setSpeed(driveController.getLeftTriggerAxis()), mmmotor);
                 driveController.start().onTrue(miniMove);
                 new ScheduleCommand(miniMove);
-             
                 break;
             case MiniSRX: // Test mini
                 // Use Talon SRX for drive train
@@ -97,15 +102,15 @@ public class RobotContainer {
                 // Setup to test Flex Motor
                 boolean testFlex = false;
                 if (testFlex) {
-                    MotorFlex motor = new MotorFlex("TestFlex", 10, -1, false);
-                    motor.setLogging(true);
-                    motor.setTestMode(true);
+                    MotorFlex mmotor = new MotorFlex("TestFlex", 10, -1, false);
+                    mmotor.setLogging(true);
+                    mmotor.setTestMode(true);
                 }
                 boolean testSmartMax = true;
                 if (testSmartMax) {
-                    MotorSparkMax motor = new MotorSparkMax("TestMax", 11, -1, false, false);
-                    motor.setLogging(true);
-                    motor.setTestMode(true);
+                    MotorSparkMax mmotor = new MotorSparkMax("TestMax", 11, -1, false, false);
+                    mmotor.setLogging(true);
+                    mmotor.setTestMode(true);
                 }
                 // Command miniSRXMove = Commands.run(() ->
                 // motor.setSpeed(getSpeedFromTriggers()), motor);
@@ -123,10 +128,12 @@ public class RobotContainer {
             case Wooly: // Big ball shooter
                 // Uses Jaguars for drive train and shooter
                 // Uses PCM to control shooter tilt and shooter activate
+                new DrivetrainJaguar(driveHID); 
                 break;
 
             case Mando: // Train engine
                 // Use SparkMax motors for drive train
+                new DrivetrainSpark(driveHID); 
                 break;
         }
         logf("Finished Creating RobotContainer\n");

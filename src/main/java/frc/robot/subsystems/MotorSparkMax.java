@@ -101,8 +101,6 @@ public class MotorSparkMax extends SubsystemBase {
          */
         motorConfig = new SparkMaxConfig();
 
-        motorConfig.encoder.positionConversionFactor(positionConversionFactor);
-        motorConfig.encoder.velocityConversionFactor(velocityConversionFactor);
         motorConfig.limitSwitch.forwardLimitSwitchEnabled(true);
         motorConfig.limitSwitch.reverseLimitSwitchEnabled(true);
 
@@ -113,8 +111,8 @@ public class MotorSparkMax extends SubsystemBase {
          * factors.
          */
         motorConfig.encoder
-                .positionConversionFactor(1)
-                .velocityConversionFactor(1);
+                .positionConversionFactor(positionConversionFactor)
+                .velocityConversionFactor(velocityConversionFactor);
 
         // Configure the closed loop controller. We want to make sure we set the
         // feedback sensor as the primary encoder.
@@ -122,9 +120,9 @@ public class MotorSparkMax extends SubsystemBase {
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
                 // Set PID values for position control. We don't need to pass a closed
                 // loop slot, as it will default to slot 0.
-                .p(0.2)
+                .p(0.2)  // was .2
                 .i(0)
-                .d(1)
+                .d(1)  // was 1
                 .outputRange(-1, 1);
 
         motorConfig.closedLoop
@@ -353,10 +351,10 @@ public class MotorSparkMax extends SubsystemBase {
         lastStart = start;
         switch (mode) {
             case POSITION:
-                value = driveController.getHID().getPOV() / 22.5;
+                value = driveController.getHID().getPOV() / 10.0;
                 if (value >= 0.0) {
                     setPos(value);
-                    logf("Flex set position:%.2f\n", value);
+                    logf("Flex set position:%.6f\n", value);
                 }
                 break;
             case VELOCITY:
