@@ -9,7 +9,7 @@ import frc.robot.Robot;
 
 public class TestTriggers extends SubsystemBase {
   /** Creates a new ReplaceMeSubs`ystem. */
-  DigitalInput sw = new DigitalInput(9);
+  DigitalInput sw = new DigitalInput(7);
 
   public TestTriggers() {
 

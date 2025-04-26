@@ -3,12 +3,13 @@ package frc.robot;
 //import static frc.robot.Robot.yaw;
 import static frc.robot.utilities.Util.logf;
 
+import com.ctre.phoenix6.hardware.CANcoder;
+
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ScheduleCommand;
@@ -19,14 +20,12 @@ import frc.robot.subsystems.DrivetrainSRX;
 import frc.robot.subsystems.LedSubsystem;
 //import frc.robot.subsystems.MotorConfigs;
 import frc.robot.subsystems.MotorFlex;
+import frc.robot.subsystems.MotorKraken;
 import frc.robot.subsystems.MotorSRX;
 import frc.robot.subsystems.MotorSparkMax;
 import frc.robot.subsystems.NeoMotor;
-//import frc.robot.subsystems.TestMiniMotors;
-//import frc.robot.subsystems.TestBlondeMotors;
+import frc.robot.subsystems.TestSRXPid;
 import frc.robot.subsystems.TestTriggers;
-//import frc.robot.subsystems.MotorConfigs.MotorTypes;
-import com.ctre.phoenix6.hardware.CANcoder;
 
 /**
  * This class is where the bulk of the robot should be declared. Since
@@ -82,7 +81,6 @@ public class RobotContainer {
                 Command miniMove = Commands.run(() -> mmmotor.setSpeed(driveController.getLeftTriggerAxis()), mmmotor);
                 driveController.start().onTrue(miniMove);
                 new ScheduleCommand(miniMove);
-             
                 break;
             case MiniSRX: // Test mini
                 // Use Talon SRX for drive train
@@ -94,11 +92,25 @@ public class RobotContainer {
                     motor.setLogging(true);
                     motor.setTestMode(true);
                 }
-                boolean testSmartMax = true;
+                boolean testSmartMax = false;
                 if (testSmartMax) {
                     MotorSparkMax motor = new MotorSparkMax("TestMax", 11, -1, false, false);
                     motor.setLogging(true);
                     motor.setTestMode(true);
+                }
+
+                boolean testKraken = false;
+                if (testKraken) {
+                    MotorKraken motorK = new MotorKraken("TestKrak", 14, -1, true);
+                    motorK.setLogging(true);
+                    motorK.setTestMode(true);
+                }
+                boolean testSRX = true;
+                if(testSRX){
+                    new TestSRXPid(14, driveHID, leds );
+                   //MotorSRX motorSRX = new MotorSRX("SRX", 14, 0, true);
+                   //Command SRXMove = Commands.run(() ->motorSRX.setSpeed(getSpeedFromTriggers()), motorSRX);
+                   //SRXMove.ignoringDisable(true).schedule();
                 }
                 // Command miniSRXMove = Commands.run(() ->
                 // motor.setSpeed(getSpeedFromTriggers()), motor);
@@ -129,7 +141,7 @@ public class RobotContainer {
     // private Command controlFlex(MotorDef motor) {
     // return Commands.run(() ->
     // motor.setSpeed(driveController.getLeftTriggerAxis()));
-    // }
+    //}
 
     public void testLeds() {
         leds.setColors(0, 127, 0);

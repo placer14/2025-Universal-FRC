@@ -60,10 +60,10 @@ public class Robot extends TimedRobot {
     //DogLog.setOptions(new DogLogOptions().withLogExtras(false));
     robotContainer = new RobotContainer();
     alliance = DriverStation.getAlliance();
-    yaw = yawProvider.getYaw();
+    yawProvider.zeroYaw();
     logf("******  Start robot %s with alliance %s yaw:%.2f Battery Volts:%.2f Brownout Volts:%.2f ******\n",
         Config.robotType, alliance.toString(),
-        yaw, RobotController.getBatteryVoltage(), RobotController.getBrownoutVoltage());
+        yawProvider.getYaw(), RobotController.getBatteryVoltage(), RobotController.getBrownoutVoltage());
   }
 
   @Override

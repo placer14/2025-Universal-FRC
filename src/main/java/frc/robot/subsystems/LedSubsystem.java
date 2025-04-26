@@ -55,7 +55,7 @@ public class LedSubsystem extends SubsystemBase {
     }
 
     private void initNeoPixel() {
-        m_led = new AddressableLED(9);
+        m_led = new AddressableLED(4);
         // Length is expensive to set, so only set it once, then just update data
         m_ledBuffer = new AddressableLEDBuffer(144);
         m_led.setLength(m_ledBuffer.getLength());

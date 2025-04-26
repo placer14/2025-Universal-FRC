@@ -14,7 +14,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
 
-public class TestSlider extends SubsystemBase {
+public class TestSRXPid extends SubsystemBase {
     private MotorSRX motorSRX;
     // private MotorDef motor;
     private XboxController driveHID;
@@ -25,16 +25,16 @@ public class TestSlider extends SubsystemBase {
         IDLE, HOMING, HOMED, MOVE_PID, MOVE_BUTTON,
     };
 
-    private STATES state = STATES.IDLE;
+    private STATES state = STATES.HOMED;
     private LedSubsystem leds;
     private double setPoint = 0;
     private int pidTimeout = 0;
 
-    public TestSlider(XboxController driveHID, LedSubsystem leds) {
+    public TestSRXPid(int id, XboxController driveHID, LedSubsystem leds) {
         this.driveHID = driveHID;
         this.leds = leds;
         logf("Start of Test Slider Subsystem\n");
-        motorSRX = new MotorSRX("SRX", 1, -1, false);
+        motorSRX = new MotorSRX("SRX", id, -1, false);
         motorSRX.setInverted(true);
         motorSRX.setSensorPhase(true);
         motorSRX.enableLimitSwitch(true, true);
