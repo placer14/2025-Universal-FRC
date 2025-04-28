@@ -1,10 +1,9 @@
 package frc.robot.subsystems;
 
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
 import static frc.robot.utilities.Util.logf;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class PID extends SubsystemBase {
 
@@ -16,6 +15,8 @@ public class PID extends SubsystemBase {
   public double kFF = 0;
   public double kMaxOutput = 1;
   public double kMinOutput = -1;
+  public double kMaxAccelation = 0;
+  public double kMaxVelocity = 0;
   private boolean smart = false;
 
   public double maxIntegralAccumulation;
@@ -41,7 +42,15 @@ public class PID extends SubsystemBase {
   }
 
   // Set PID using the unique values for all parameters
-  public PID(String name, double kP, double kI, double kD, double kIz, double kFF, double min, double max,
+  public PID(
+      String name,
+      double kP,
+      double kI,
+      double kD,
+      double kIz,
+      double kFF,
+      double min,
+      double max,
       boolean smart) {
     this.name = name;
     this.kP = kP;
@@ -55,8 +64,17 @@ public class PID extends SubsystemBase {
     this.smart = smart;
   }
 
-  public PID(String name, double kP, double kI, double kD, double kIz, double kFF, double maxIntegralAccumulation,
-      double resetIntegralAccumulationThreshold, int allowableCloseLoopError, boolean smart) {
+  public PID(
+      String name,
+      double kP,
+      double kI,
+      double kD,
+      double kIz,
+      double kFF,
+      double maxIntegralAccumulation,
+      double resetIntegralAccumulationThreshold,
+      int allowableCloseLoopError,
+      boolean smart) {
     this.name = name;
     this.kP = kP;
     this.kI = kI;
@@ -70,17 +88,23 @@ public class PID extends SubsystemBase {
 
   @Override
   public void periodic() {
-    //smart = false;  // todo fix at some point
+    // smart = false;  // todo fix at some point
     if (smart) {
       PIDChanged = updatePID();
-      if(PIDChanged) {
+      if (PIDChanged) {
         showPID();
       }
     }
   }
 
   public String getPidData() {
-    return String.format("P:%f I:%f D:%f IZ:%f FF:%f Min:%f Max:%f", kP, kI, kD, kIz, kFF, kMinOutput, kMaxOutput);
+    return String.format(
+        "P:%f I:%f D:%f IZ:%f FF:%f Min:%f Max:%f", kP, kI, kD, kIz, kFF, kMinOutput, kMaxOutput);
+  }
+
+  public void setMotionMagicSRX(double kMaxVelocity, double kMaxAcceleration) {
+    this.kMinOutput = kMaxVelocity;
+    this.kMaxAccelation = kMaxAcceleration;
   }
 
   public void setMinMax(double min, double max) {
@@ -109,7 +133,7 @@ public class PID extends SubsystemBase {
 
   private boolean updatePID() {
     boolean change = false;
-    
+
     if (smart) {
       // read PID coefficients from SmartDashboard
       double p = SmartDashboard.getNumber("P Gain", 0);
