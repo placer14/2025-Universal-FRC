@@ -108,10 +108,14 @@ public class RobotContainer {
         darrylMoveBack.ignoringDisable(true).schedule();
         break;
       case MiniMini:
-        MotorSRX mmmotor = new MotorSRX("MiniSRX", 10, -1, true);
-        Command miniMove = Commands.run(() -> mmmotor.setSpeed(driveController.getLeftTriggerAxis()), mmmotor);
-        driveController.start().onTrue(miniMove);
-        new ScheduleCommand(miniMove);
+        MotorSRX redMotor = new MotorSRX("RedMotor", 10, -1, true);
+        MotorFlex neoMotor = new MotorFlex("FlexMotor", 3, -1, true);
+        Command redMoveCmd = Commands.run(() -> redMotor.setSpeed(driveController.getLeftTriggerAxis()), redMotor);
+        Command neoMoveCmd = Commands.run(() -> neoMotor.setSpeed(driveController.getLeftTriggerAxis()), neoMotor);
+        new ScheduleCommand(Commands.parallel(redMoveCmd, neoMoveCmd).ignoringDisable(true)).schedule();
+        // Command miniMove = Commands.run(() -> mmmotor.setSpeed(driveController.getLeftTriggerAxis()), mmmotor);
+        // driveController.start().onTrue(miniMove);
+        // new ScheduleCommand(miniMove);
         break;
       case MiniSRX: // Test mini
         // Use Talon SRX for drive train
