@@ -128,23 +128,22 @@ public class MotorFX extends SubsystemBase implements MotorDef {
     }
   }
 
-  public void setPos(double position) {}
+  public void setPos(double position) {
+  }
 
   public void setInverted(boolean invert) {
     this.motorInvert = invert;
     StatusCode retval = motor.getConfigurator().refresh(motorConfigs);
     if (retval.isOK()) {
       /* Then set the invert config to the appropriate value */
-      motorConfigs.Inverted =
-          invert ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive;
+      motorConfigs.Inverted = invert ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive;
       retval = motor.getConfigurator().apply(motorConfigs);
     }
     if (followId > 0) {
       retval = followMotor.getConfigurator().refresh(motorConfigs);
       if (retval.isOK()) {
         /* Then set the invert config to the appropriate value */
-        motorConfigs.Inverted =
-            invert ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive;
+        motorConfigs.Inverted = invert ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive;
         retval = followMotor.getConfigurator().apply(motorConfigs);
       }
     }
@@ -170,11 +169,13 @@ public class MotorFX extends SubsystemBase implements MotorDef {
   }
 
   public void periodic() {
-    if (!Robot.config.showMotorData) return;
+    if (!Robot.config.showMotorData)
+      return;
     if (count % 50 == 0 && myLogging) {
       logPeriodic();
     }
-    if (count % 500 == 0) updateSmart();
+    if (count % 500 == 0)
+      updateSmart();
   }
 
   public void logPeriodic() {
@@ -224,8 +225,8 @@ public class MotorFX extends SubsystemBase implements MotorDef {
 
     // SupplyCurrentLimitConfiguration(boolean enable, double currentLimit, double
     // triggerThresholdCurrent, double triggerThresholdTime)
-    SupplyCurrentLimitConfiguration cl =
-        new SupplyCurrentLimitConfiguration(true, peakAmps, continousAmps, durationMilliseconds);
+    SupplyCurrentLimitConfiguration cl = new SupplyCurrentLimitConfiguration(true, peakAmps, continousAmps,
+        durationMilliseconds);
     cl.enable = true;
   }
 
@@ -269,8 +270,8 @@ public class MotorFX extends SubsystemBase implements MotorDef {
     // PIDToMotor(pid, 0, Robot.config.kTimeoutMs);
   }
 
-  public void setVelocityPID(PID pid) {
-    PIDToMotor(pid, 1, Robot.config.kTimeoutMs);
+  public void setVelocityPID(PID pid, int slot, FeedbackDevice feedbackDevice) {
+    PIDToMotor(pid, slot, Robot.config.kTimeoutMs);
   }
 
   public double getMotorVoltage() {
@@ -283,7 +284,6 @@ public class MotorFX extends SubsystemBase implements MotorDef {
   }
 
   public void PIDToMotor(PID pid, int slot, int timeout) {
-
     // Configure the TalonFX for basic use
     TalonFXConfiguration configs = new TalonFXConfiguration();
     // This TalonFX should be configured with a kP of 1, a kI of 0, a kD of 10, and
@@ -357,7 +357,6 @@ public class MotorFX extends SubsystemBase implements MotorDef {
   }
 
   public void setPositionPID(int pidIdx, PID pid) {
-    // TODO need to code this
     // Config the sensor used for Primary PID and sensor direction
 
     /* Config the peak and nominal outputs, 12V means full */

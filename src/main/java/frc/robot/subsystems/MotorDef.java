@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+
 public interface MotorDef {
     // public MotorSrx(String name, int Id, int followId, boolean logging);
 
@@ -46,7 +48,7 @@ public interface MotorDef {
 
     public void setEncoderPosition(double position);
 
-    public void setVelocityPID(PID pid);
+    public void setVelocityPID(PID pid, int slot, FeedbackDevice feedbackDevice);
 
     public double getMotorVoltage();
 

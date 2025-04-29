@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import static frc.robot.Robot.count;
 import static frc.robot.utilities.Util.logf;
 import static frc.robot.utilities.Util.round2;
+import static frc.robot.Robot.robotContainer;
 
 import com.ctre.phoenix.ErrorCode;
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -13,7 +14,9 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Robot;
+import frc.robot.RobotContainer;
 
 // setSensorPhase() should change the direction reported in the getSelectedSensor*() methods
 // (but not the SensorCollection methods).
@@ -31,6 +34,8 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
   private boolean myLogging = false;
   private ErrorCode errorCode;
   private FeedbackDevice feedBackDevice = FeedbackDevice.QuadEncoder;
+  private int numberCyclesForDisplay = 1000000;
+  private boolean enableTestMode = false;
 
   public MotorSRX(String name, int id, int followId, boolean logging) {
     this.name = name;
@@ -56,12 +61,7 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
     if (followId > 0)
       logf(
           "Created %s motor ids:<%d,%d> firmware:<%d,%d> voltage:<%.1f,%.1f>\n",
-          name,
-          id,
-          followId,
-          motor.getFirmwareVersion(),
-          followMotor.getFirmwareVersion(),
-          motor.getBusVoltage(),
+          name, id, followId, motor.getFirmwareVersion(), followMotor.getFirmwareVersion(), motor.getBusVoltage(),
           followMotor.getBusVoltage());
     else
       logf(
@@ -73,23 +73,28 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
     myLogging = value;
   }
 
+  public void setSmartTicks(int numberLoopsForDisplay) {
+    this.numberCyclesForDisplay = numberLoopsForDisplay;
+  }
+
+  public void setTestMode(boolean value) {
+    logf("Set Flex Test Mode:%b\n", value);
+    enableTestMode = value;
+  }
+
   public double getPos() {
     return motor.getSelectedSensorPosition();
   }
 
   public void enableLimitSwitch(boolean forward, boolean reverse) {
     if (forward)
-      motor.configForwardLimitSwitchSource(
-          LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyClosed);
+      motor.configForwardLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyClosed);
     else
-      motor.configForwardLimitSwitchSource(
-          LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.Disabled);
+      motor.configForwardLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.Disabled);
     if (reverse)
-      motor.configReverseLimitSwitchSource(
-          LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyClosed);
+      motor.configReverseLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyClosed);
     else
-      motor.configReverseLimitSwitchSource(
-          LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.Disabled);
+      motor.configReverseLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.Disabled);
   }
 
   public boolean getForwardLimitSwitch() {
@@ -102,10 +107,13 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
 
   public void setBrakeMode(boolean mode) {
     motor.setNeutralMode(mode ? NeutralMode.Brake : NeutralMode.Coast);
-    if (followId > 0) followMotor.setNeutralMode(mode ? NeutralMode.Brake : NeutralMode.Coast);
+    if (followId > 0)
+      followMotor.setNeutralMode(mode ? NeutralMode.Brake : NeutralMode.Coast);
   }
 
   public void setPos(double position) {
+    lastPos = position;
+    motor.selectProfileSlot(0, 0);
     motor.set(ControlMode.Position, position);
   }
 
@@ -115,6 +123,7 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
 
   public void setVelocity(double velocity) {
     // logf("!!!! Set Velocity for %s to %.0f\n", name, velocity);
+    motor.selectProfileSlot(1, 0);
     motor.set(ControlMode.Velocity, velocity);
   }
 
@@ -138,47 +147,24 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
   }
 
   public void periodic() {
-    if (!Robot.config.showMotorData) return;
     if (count % 50 == 0 && Robot.debug) {
       logPeriodic();
     }
-    if (count % 10 == 0) updateSmart();
+    if (count % numberCyclesForDisplay == 0)
+      updateSmart();
+
+    if (enableTestMode)
+      testCases(RobotContainer.leds);
   }
 
   public void logPeriodic() {
-    if (!myLogging) {
-      return;
-    }
     double pos = motor.getSensorCollection().getQuadraturePosition();
     if (pos != lastPos) {
       lastPos = pos;
       if (myLogging) {
+        logf("%s\n", getMotorVCS());
         if (followId > 0) {
-          logf(
-              "%s motor sp:%.2f cur:%.2f temp:%.2f vel:%.2f pos:%.2f\n",
-              name,
-              motor.getMotorOutputPercent(),
-              motor.getStatorCurrent(),
-              motor.getTemperature(),
-              motor.getSelectedSensorVelocity(),
-              pos);
-          logf(
-              "%s follow sp:%.2f cur:%.2f temp:%.2f vel:%.2f pos:%.2f\n",
-              name,
-              followMotor.getMotorOutputPercent(),
-              followMotor.getStatorCurrent(),
-              followMotor.getTemperature(),
-              followMotor.getSelectedSensorVelocity(),
-              (double) followMotor.getSensorCollection().getQuadraturePosition());
-        } else {
-          logf(
-              "%s motor sp:%.2f cur:%.2f temp:%.2f vel:%.2f pos:%.2f\n",
-              name,
-              motor.getMotorOutputPercent(),
-              motor.getStatorCurrent(),
-              motor.getTemperature(),
-              motor.getSelectedSensorVelocity(),
-              (double) motor.getSensorCollection().getQuadraturePosition());
+          logf("%s\n", getMotorVCS(followMotor));
         }
       }
     }
@@ -197,9 +183,12 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
   }
 
   public void updateSmart() {
-    SmartDashboard.putNumber(
-        name + " Pos", (int) motor.getSensorCollection().getQuadraturePosition());
-    SmartDashboard.putNumber(name + " Cur", round2(motor.getStatorCurrent()));
+    SmartDashboard.putString(name + " Mode", mode.toString());
+    SmartDashboard.putNumber(name + " Pos", (int) motor.getSensorCollection().getQuadraturePosition());
+    SmartDashboard.putNumber(name + " Cur", round2(getMotorCurrent()));
+    SmartDashboard.putNumber(name + " Vel", round2(getActualVelocity()));
+    SmartDashboard.putBoolean(name + " forL", getForwardLimitSwitch());
+    SmartDashboard.putBoolean(name + " revL", getReverseLimitSwitch());
   }
 
   public void setSpeed(double speed) {
@@ -230,18 +219,19 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
     motor.getSensorCollection().setQuadraturePosition((int) position, Robot.config.kTimeoutMs);
   }
 
-  public void setPositionPID(PID pid, FeedbackDevice feedBack) {
+  public void setPositionPID(PID pid, int slot, FeedbackDevice feedBack) {
     feedBackDevice = feedBack;
-    setPositionPID(0, pid);
-    PIDToMotor(pid, 0, Robot.config.kTimeoutMs);
+    setPositionPID(slot, pid);
+    PIDToMotor(pid, slot, Robot.config.kTimeoutMs);
   }
 
   public void forcePercentMode() {
     motor.set(ControlMode.PercentOutput, 0.001);
   }
 
-  public void setVelocityPID(PID pid) { // tod at some point fix this name
-    PIDToMotor(pid, 0, Robot.config.kTimeoutMs);
+  public void setVelocityPID(PID pid, int slot, FeedbackDevice feedBack) { // tod at some point fix this name
+    feedBackDevice = feedBack;
+    PIDToMotor(pid, slot, Robot.config.kTimeoutMs);
   }
 
   public double getMotorVoltage() {
@@ -256,7 +246,7 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
     motor.config_kP(slot, pid.kP, timeout);
     motor.config_kI(slot, pid.kI, timeout);
     motor.config_kD(slot, pid.kD, timeout);
-    motor.config_kF(slot, pid.kFF, timeout);
+    motor.config_kF(slot, pid.kF, timeout);
     motor.configPeakOutputForward(pid.kMaxOutput);
     motor.configPeakOutputReverse(pid.kMinOutput);
     motor.config_IntegralZone(slot, (int) pid.kIz, timeout);
@@ -288,23 +278,14 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
   }
 
   private String getMotorVCS(TalonSRX motor) {
-    if (Math.abs(lastSpeed) > .02) {
-      double bussVoltage = motor.getBusVoltage();
-      double outputVoltage = motor.getMotorOutputVoltage();
-      double supplyCurrent = motor.getSupplyCurrent();
-      double statorCurrent = motor.getStatorCurrent();
-      return String.format(
-          "%s motor volts<%.2f:%.2f> cur<%.2f:%.2f> power<%.2f:%.2f> sp:%.3f",
-          name,
-          bussVoltage,
-          outputVoltage,
-          supplyCurrent,
-          statorCurrent,
-          bussVoltage * supplyCurrent,
-          outputVoltage * statorCurrent,
-          lastSpeed);
-    }
-    return name + "Not Running";
+    double bussVoltage = motor.getBusVoltage();
+    double outputVoltage = motor.getMotorOutputVoltage();
+    double supplyCurrent = motor.getSupplyCurrent();
+    double statorCurrent = motor.getStatorCurrent();
+    return String.format(
+        "%s motor volts<%.2f:%.2f> cur<%.2f:%.2f> power<%.2f:%.2f> last sp:%.3f",
+        name, bussVoltage, outputVoltage, supplyCurrent, statorCurrent, bussVoltage * supplyCurrent,
+        outputVoltage * statorCurrent, lastSpeed);
   }
 
   public double getMotorCurrent() {
@@ -315,7 +296,6 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
     if (followMotor == null) {
       return 0;
     }
-
     return followMotor.getStatorCurrent();
   }
 
@@ -353,5 +333,83 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
   public void setRampOpenLoop(double rate) {
     // Rate is secondsFromNeutralToFull
     motor.configOpenloopRamp(rate);
+  }
+
+  public void setUpForTestCases(LedSubsystem leds) {
+    logf("Start of Test SRX Subsystem\n");
+    setInverted(true);
+    setSensorPhase(true);
+    enableLimitSwitch(false, false);
+    PID positionPID = new PID("Pos", 0.08, 0, 0, 0, 0, -1, 1, true);
+    positionPID.showPID();
+    PID velocityPID = new PID("Vel", .005, 0, 0, 0, 1.5, -1, +1, true);
+    velocityPID.showPID();
+    // Motion Magic messes things up positionPID.setMotionMagicSRX(.5, 2.0);
+    setPositionPID(positionPID, 0, FeedbackDevice.QuadEncoder); // set pid for SRX
+    setVelocityPID(velocityPID, 1, FeedbackDevice.QuadEncoder);
+    setEncoderPosition(0);
+    setSmartTicks(5); // Set to update SmartDashBoard every 100 milli seconds
+    enableTestMode = true;
+    leds.setRangeOfColor(0, mode.ordinal(), 0, 127, 0);
+  }
+
+  enum Modes {
+    POSITION, VELOCITY, MOTIONMAGIC, SPEED;
+
+    public Modes next() {
+      Modes[] values = Modes.values();
+      int nextOrdinal = (this.ordinal() + 1) % values.length;
+      return values[nextOrdinal];
+    }
+  }
+
+  Modes mode = Modes.POSITION;
+  boolean lastStart = false;
+  double lastValue = 0;
+
+  void testCases(LedSubsystem leds) {
+    CommandXboxController driveController = RobotContainer.driveController;
+    double value = 0.0;
+    // Hiting the start button moves to the next control method
+    boolean start = driveController.start().getAsBoolean();
+    if (start && !lastStart) {
+      setVelocity(0.0);
+      setSpeed(0.0);
+      setPos(0.0);
+      mode = mode.next(); // Get the next mode
+      logf("New Test Mode:%s Ordinal:%s\n", mode, mode.ordinal());
+    }
+    lastStart = start;
+    switch (mode) {
+      case POSITION:
+        value = driveController.getHID().getPOV() * 200;
+        if (value >= 0.0 && lastValue != value) {
+          setPos(value);
+          lastValue = value;
+          logf("SRX set position:%.2f\n", value);
+        }
+        break;
+      case VELOCITY:
+        value = driveController.getHID().getPOV() * 1.0;
+        if (value >= 0) {
+          setVelocity(value);
+          logf("SRX set velocity:%.2f\n", value);
+          lastValue = value;
+        }
+        break;
+      case MOTIONMAGIC:
+        lastValue = 0.0;
+        break;
+      case SPEED:
+        value = robotContainer.getSpeedFromTriggers();
+        if (Math.abs(value) > 0.05)
+          logf("Set Test speed:%.2f\n", value);
+        setSpeed(value);
+        lastValue = value;
+        break;
+    }
+    leds.setAllColors(0, 0, 0);
+    leds.setRangeOfColor(0, mode.ordinal(), 0, 127, 0);
+    SmartDashboard.putNumber(name + " SetP", lastValue);
   }
 }

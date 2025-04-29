@@ -1,18 +1,14 @@
 package frc.robot.subsystems;
 
-//import static frc.robot.utilities.Util.logf;
-
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
 
 public class TestTriggers extends SubsystemBase {
-  /** Creates a new ReplaceMeSubs`ystem. */
-  DigitalInput sw = new DigitalInput(7);
+  DigitalInput sw = new DigitalInput(Robot.config.DIOTestSwitch);
 
   public TestTriggers() {
-
   }
 
   @Override

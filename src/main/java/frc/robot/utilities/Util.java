@@ -11,6 +11,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
+import edu.wpi.first.wpilibj.RobotController;
+
 public class Util {
   // Logging Methods
   // Use tail -f /home/lvuser/FRC_UserProgram.log | grep '++++\|----\|????' on
@@ -35,7 +37,8 @@ public class Util {
   }
 
   public static void loginfo(String pattern, Object... arguments) {
-    if (Robot.debug) logf(pattern, arguments);
+    if (Robot.debug)
+      logf(pattern, arguments);
   }
 
   // Rounding Methods
@@ -63,14 +66,16 @@ public class Util {
   // Take an angle and convert it to -180 to 180
   public static double normalizeAngle(double angle) {
     double a = (angle + 180) % 360;
-    if (a < 0) a += 360;
+    if (a < 0)
+      a += 360;
     return a - 180;
   }
 
   // Take an angle and convert it to 0 to 360
   public static double unNormalilzeAngle(double angle) {
     double a = angle % 360;
-    if (a < 0) a += 360;
+    if (a < 0)
+      a += 360;
     return a;
   }
 
@@ -86,25 +91,24 @@ public class Util {
   }
 
   public static String getRobotType() {
-    String line = "";
+    String line;
     File filePath = new File("/home/lvuser/deploy/robotType.txt");
     try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-            line = br.readLine();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-     return line;
+      line = br.readLine();
+    } catch (Exception e) {
+      e.printStackTrace();
+      line = "Not Created";
+    }
+    return line;
   }
 
   public static void splashScreen(String version) {
-
-    Util.log("**********************************************************************");
-    Util.log("");
-    Util.logf(
-        "Robot Type %s Started compiled:%s version:%s RobotFile:%s\n",
-        Config.robotType, Util.showFileTime(), version, getRobotType());
-    Util.log("");
-    Util.log("**********************************************************************");
+    logf("**********************************************************************\n\n");
+    logf("Robot Type %s Started compiled:%s version:%s\n",
+        Config.robotType, Util.showFileTime(), version);
+    logf("Alliance:%s yaw:%.2f Battery Volts:%.2f RobotFile:%s\n",
+        Robot.alliance.toString(), Robot.yawProvider.getYaw(), RobotController.getBatteryVoltage(), getRobotType());
+    logf("**********************************************************************\n\n");
   }
 
   public static double range(
@@ -113,8 +117,10 @@ public class Util {
   }
 
   public static double clip(double number, double min, double max) {
-    if (number < min) return min;
-    if (number > max) return max;
+    if (number < min)
+      return min;
+    if (number > max)
+      return max;
     return number;
   }
 }

@@ -12,7 +12,7 @@ public class PID extends SubsystemBase {
   public double kI = 0;
   public double kD = 0;
   public double kIz = 0;
-  public double kFF = 0;
+  public double kF = 0;
   public double kMaxOutput = 1;
   public double kMinOutput = -1;
   public double kMaxAccelation = 0;
@@ -57,7 +57,7 @@ public class PID extends SubsystemBase {
     this.kI = kI;
     this.kD = kD;
     this.kIz = kIz;
-    this.kFF = kFF;
+    this.kF = kFF;
     this.kMaxOutput = max;
     this.kMinOutput = min;
     this.name = name;
@@ -80,7 +80,7 @@ public class PID extends SubsystemBase {
     this.kI = kI;
     this.kD = kD;
     this.kIz = kIz;
-    this.kFF = kFF;
+    this.kF = kFF;
     this.smart = smart;
     this.name = name;
     logf("Create %s pid %s \n", name, getPidData());
@@ -88,7 +88,9 @@ public class PID extends SubsystemBase {
 
   @Override
   public void periodic() {
-    // smart = false;  // todo fix at some point
+    SmartDashboard.getEntry("Button");
+    // SmartDashboard.getEntry("Button");
+    // smart = false; // todo fix at some point
     if (smart) {
       PIDChanged = updatePID();
       if (PIDChanged) {
@@ -99,7 +101,7 @@ public class PID extends SubsystemBase {
 
   public String getPidData() {
     return String.format(
-        "P:%f I:%f D:%f IZ:%f FF:%f Min:%f Max:%f", kP, kI, kD, kIz, kFF, kMinOutput, kMaxOutput);
+        "P:%f I:%f D:%f IZ:%f FF:%f Min:%f Max:%f", kP, kI, kD, kIz, kF, kMinOutput, kMaxOutput);
   }
 
   public void setMotionMagicSRX(double kMaxVelocity, double kMaxAcceleration) {
@@ -111,38 +113,37 @@ public class PID extends SubsystemBase {
     kMaxOutput = max;
     kMinOutput = min;
     if (smart) {
-      SmartDashboard.putNumber("Max Output", kMaxOutput);
-      SmartDashboard.putNumber("Min Output", kMinOutput);
+      SmartDashboard.putNumber(name + " Mx", kMaxOutput);
+      SmartDashboard.putNumber(name + " Mi", kMinOutput);
     }
   }
 
   void showPID() {
     // display PID coefficients on SmartDashboard
     if (smart) {
-      SmartDashboard.putString("PID Name", name);
-      SmartDashboard.putNumber("P Gain", kP);
-      SmartDashboard.putNumber("I Gain", kI);
-      SmartDashboard.putNumber("D Gain", kD);
-      SmartDashboard.putNumber("I Zone", kIz);
-      SmartDashboard.putNumber("Feed Forward", kFF);
-      SmartDashboard.putNumber("Max Output", kMaxOutput);
-      SmartDashboard.putNumber("Min Output", kMinOutput);
-      SmartDashboard.putNumber("Set Rotations", 0);
+      //SmartDashboard.putString("PID Name", name);
+      SmartDashboard.putNumber(name + " P", kP);
+      SmartDashboard.putNumber(name + " I", kI);
+      SmartDashboard.putNumber(name + " D", kD);
+      SmartDashboard.putNumber(name + " IZ", kIz);
+      SmartDashboard.putNumber(name + " F", kF);
+      SmartDashboard.putNumber(name + " Mx", kMaxOutput);
+      SmartDashboard.putNumber(name + " Mi", kMinOutput);
+      // SmartDashboard.putNumber("Set Rotations", 0);
     }
   }
 
   private boolean updatePID() {
     boolean change = false;
-
     if (smart) {
       // read PID coefficients from SmartDashboard
-      double p = SmartDashboard.getNumber("P Gain", 0);
-      double i = SmartDashboard.getNumber("I Gain", 0);
-      double d = SmartDashboard.getNumber("D Gain", 0);
-      double iz = SmartDashboard.getNumber("I Zone", 0);
-      double ff = SmartDashboard.getNumber("Feed Forward", 0);
-      double max = SmartDashboard.getNumber("Max Output", 0);
-      double min = SmartDashboard.getNumber("Min Output", 0);
+      double p = SmartDashboard.getNumber(name + " P", 0);
+      double i = SmartDashboard.getNumber(name + " I", 0);
+      double d = SmartDashboard.getNumber(name + " D", 0);
+      double iz = SmartDashboard.getNumber(name + " IZ", 0);
+      double ff = SmartDashboard.getNumber(name + " F", 0);
+      double max = SmartDashboard.getNumber(name + " Mx", 0);
+      double min = SmartDashboard.getNumber(name + " Mi", 0);
       if ((p != kP)) {
         logf("PID old p:%.2f new p:%.2f\n", kP, p);
         kP = p;
@@ -160,8 +161,8 @@ public class PID extends SubsystemBase {
         kIz = iz;
         change = true;
       }
-      if ((ff != kFF)) {
-        kFF = ff;
+      if ((ff != kF)) {
+        kF = ff;
         change = true;
       }
       if ((max != kMaxOutput) || (min != kMinOutput)) {

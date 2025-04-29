@@ -55,7 +55,7 @@ public class TestSRXPid extends SubsystemBase {
     positionPID = new PID("Drive", 0.1, 0, 0, 0, 0, -1, 1, true);
     positionPID.showPID();
     positionPID.setMotionMagicSRX(.5, 2.0);
-    motorSRX.setPositionPID(positionPID, FeedbackDevice.QuadEncoder); // set pid for SRX
+    motorSRX.setPositionPID(positionPID, 0, FeedbackDevice.QuadEncoder); // set pid for SRX
     resetPos();
   }
 
@@ -74,21 +74,21 @@ public class TestSRXPid extends SubsystemBase {
       SmartDashboard.putString("State", state.toString());
     }
     if (positionPID.PIDChanged) {
-      motorSRX.setPositionPID(positionPID, FeedbackDevice.QuadEncoder); // set pid for SRX
+      motorSRX.setPositionPID(positionPID, 0, FeedbackDevice.QuadEncoder); // set pid for SRX
       positionPID.PIDChanged = false;
     }
     switch (state) {
       case IDLE:
         state = STATES.HOMING;
         motorSRX.setSpeed(-.3);
-        leds.setColors(127, 127, 0);
+        leds.setAllColors(127, 127, 0);
         break;
       case HOMING:
         if (!motorSRX.getReverseLimitSwitch()) {
           logf("Slider Homed\n");
           resetPos();
           state = STATES.HOMED;
-          leds.setColors(0, 127, 0);
+          leds.setAllColors(0, 127, 0);
         }
         break;
       case HOMED:
@@ -96,13 +96,13 @@ public class TestSRXPid extends SubsystemBase {
         if (pov == -1) {
           lastPov = -1;
           if (Math.abs(driveHID.getLeftTriggerAxis()) > .05) {
-            leds.setColors(127, 0, 127);
+            leds.setAllColors(127, 0, 127);
             state = STATES.MOVE_BUTTON;
             pidTimeout = 50 * 4;
             return;
           }
           if (Math.abs(driveHID.getRightTriggerAxis()) > .05) {
-            leds.setColors(127, 127, 0);
+            leds.setAllColors(127, 127, 0);
             state = STATES.MOVE_BUTTON;
             pidTimeout = 50 * 4;
             return;
@@ -117,7 +117,7 @@ public class TestSRXPid extends SubsystemBase {
             SmartDashboard.putNumber("SetPTO", (RobotController.getFPGATime() - begin) / 1000);
             state = STATES.MOVE_PID;
             pidTimeout = 50 * 4;
-            leds.setColors(0, 0, 127);
+            leds.setAllColors(0, 0, 127);
           }
         }
         break;
@@ -126,7 +126,7 @@ public class TestSRXPid extends SubsystemBase {
         if (error < 20) {
           state = STATES.HOMED;
           logf("Reached Set Point error:%.2f\n", error);
-          leds.setColors(0, 127, 0);
+          leds.setAllColors(0, 127, 0);
           break;
         }
         pidTimeout--;
@@ -134,7 +134,7 @@ public class TestSRXPid extends SubsystemBase {
           logf("PID Timed out error:%.2f\n", error);
           motorSRX.setSpeed(0);
           state = STATES.HOMED;
-          leds.setColors(0, 127, 0);
+          leds.setAllColors(0, 127, 0);
           break;
         }
         break;
@@ -152,7 +152,7 @@ public class TestSRXPid extends SubsystemBase {
           break;
         }
         motorSRX.setSpeed(0);
-        leds.setColors(0, 127, 0);
+        leds.setAllColors(0, 127, 0);
         state = STATES.HOMED;
         break;
     }

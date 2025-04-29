@@ -13,7 +13,7 @@ import static frc.robot.utilities.Util.splashScreen;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.RobotController;
+//import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -49,27 +49,15 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit() {
-    // DogLog.setOptions(new DogLogOptions().withLogExtras(false));
-    robotContainer = new RobotContainer();
     alliance = DriverStation.getAlliance();
     yawProvider.zeroYaw();
-
-    logf(
-        "******  Start robot %s with alliance %s yaw:%.2f Battery Volts:%.2f Brownout Volts:%.2f ******\n",
-        Config.robotType,
-        alliance.toString(),
-        yawProvider.getYaw(),
-        RobotController.getBatteryVoltage(),
-        RobotController.getBrownoutVoltage());
-    
-    logf("Start Directory:%s\n", System.getProperty("user.dir"));
     splashScreen("1.5");
+    robotContainer = new RobotContainer();
   }
 
   @Override
   public void teleopInit() {
     logf("Start Teleop\n");
-    // DogLog.log("Start Teleop yaw:", yaw);
     System.gc();
   }
 
@@ -95,8 +83,6 @@ public class Robot extends TimedRobot {
     if (count % 50 == 0) {
       // System.gc();
     }
-    // logf("Count:%d\n", count);
-    // DogLog.log("Dog:", count);
   }
 
   // @Override

@@ -14,7 +14,7 @@ public class Config {
     };
 
     // Type of Robot
-    public static RobotType robotType = RobotType.BlondeMini;
+    public static RobotType robotType = RobotType.MiniSRX;
 
     // Pneumatic Control Modules Parameters
     public int pcmHubID = -1;
@@ -23,7 +23,6 @@ public class Config {
     public boolean LimeLight = false;
     public boolean ledRing = false;
     public boolean PhotonVision = false;
-
     public enum DriveType {
         None, Tank, MildTank, AggressiveTank, MildArcade, AggressiveArcade, MildCurvature, CurvatureAggressive
     };
@@ -32,8 +31,8 @@ public class Config {
     public boolean driveTrainJaguar = false;
     public int driveRight = 2;
     public int driveLeft = 3;
-    public int driveRightFollow = 4;
-    public int driveLeftFollow = 5;
+    public int driveRightFollow = -1;
+    public int driveLeftFollow = -1;
     public static DriveType driveType = DriveType.MildArcade;
     public boolean invertDrivetrain = true;
     public boolean defaultBrakeMode = true;
@@ -60,6 +59,12 @@ public class Config {
     public boolean ColorSensor = false;
     public PneumaticsModuleType pneumaticType = null;
 
+    // RoboRIO Pin usage
+    public final int PWMLedStrip = 9;
+    public final int numberOfLeds = 8;
+    public final int DIOTestSwitch = 8;
+    public final int DIOTestTrigger = 7;
+
     // Misc parameters
     public boolean frisbeeShooter = false;
     public boolean ballShooter = false;
@@ -70,49 +75,12 @@ public class Config {
     public boolean PowerDistributionHubV2 = false;
     public boolean PneumaticHUB = false;
     public boolean BlinkTarget = false;
+    
 
     Config() {
         // MiniSRX, Squidward, Kevin, Wooly, Mando
         logf("Start of Robot Config for %s\n", robotType);
-        switch (robotType) {
-            case Simulation:
-                break;
-            case BlondeMini:
-                // Use Talon SRX for drive train
-                driveLeftFollow = -1;
-                driveRightFollow = -1;
-                break;
-            case MiniMini:
-                driveLeftFollow = -1;
-                driveRightFollow = -1;
-                break;
-            case DarrylMini:
-                // Use Talon SRX for drive train
-                driveLeftFollow = -1;
-                driveRightFollow = -1;
-                break;
-            case MiniSRX: // Test mini
-                // Use Talon SRX for drive train
-                driveLeftFollow = -1;
-                driveRightFollow = -1;
-                break;
-            case Squidward: // Holiday Present Robot
-                // Uses Talon SRX for drive train
-                break;
-            case Kevin: // Ginger Bread Robot
-                // Uses Talon SRX for drive train
-                break;
-            case Wooly: // Big ball shooter
-                // Uses Jaguars for drive train and shooter
-                // Uses PCM to control shooter tilt and shooter activate
-                driveTrainJaguar = true;
-                enableCompressor = true;
-                pneumaticType = PneumaticsModuleType.CTREPCM;
-                break;
-            case Mando: // Train engine
-                // Use SparkMax motors for drive train
-                break;
-        }
+
     }
 
     public RobotType getRobotType() {
