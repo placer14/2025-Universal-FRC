@@ -4,6 +4,7 @@ import static frc.robot.Robot.robotContainer;
 import static frc.robot.utilities.Util.logf;
 import static frc.robot.utilities.Util.round2;
 
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase.ControlType;
@@ -53,18 +54,6 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
     private double velocityConversionFactor = 1;
     private boolean enableTestMode = false;
     private SparkMaxConfig motorConfig;
-
-    // public MotorFlex(MotorConfigs motorC) {
-    // this.motorC = motorC;
-    // myMotorFlex(motorC.name, motorC.id, motorC.followID, motorC.logging);
-    // }
-
-    // public MotorFlex(String name, int id, int followId, boolean brakeMode,
-    // boolean invert) {
-    // this.motorC = motorC;
-    // motorC.inverted = invert;
-    // myMotorFlex(name, id, followId, false);
-    // }
 
     public MotorFlex(String name, int id, int followId, boolean logging) {
         this.name = name;
@@ -170,21 +159,21 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
     }
 
     public void enableLimitSwitch(boolean forward, boolean reverse) {
-    };
+    }
 
     public void setInverted(boolean invert) {
-    };
+    }
 
     public double getActualVelocity() {
         return relEncoder.getVelocity();
-    };
+    }
 
     public double getLastSpeed() {
         return lastSpeed;
     }
 
     public void forcePercentMode() {
-    };
+    }
 
     /*
      * Peak Current and Duration must be exceeded before current limit is activated.
@@ -192,19 +181,19 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
      * Current params to 0 if desired behavior is to immediately current-limit.
      */
     public void setCurrentLimit(int peakAmps, int continousAmps, int durationMilliseconds) {
-    };
+    }
 
     public void updateSmart() {
-    };
+    }
 
     public void setSpeedAbsolute(double speed) {
-    };
+    }
 
-    public void setVelocityPID(PID pid) {
-    };
+    public void setVelocityPID(PID pid, int slot, FeedbackDevice feedbackDevice) {
+    }
 
     public void PIDToMotor(PID pid, int slot, int timeout) {
-    };
+    }
 
     public String getMotorVCS() {
         return getMotorVCS(motor);
@@ -214,44 +203,20 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
         return String.format("%s motor volts:%.2f cur:%.2f vel:%.2f sp:%.2f\n", name, motor.getBusVoltage(),
                 motor.getOutputCurrent(),
                 motor.getEncoder().getVelocity(), motor.get());
-    };
+    }
 
     public void setSensorPhase(boolean phase) {
-    };
+    }
 
     // Config the sensor used for Primary PID and sensor direction
     public void setPositionPID(int pidIdx, PID pid) {
-
-    };
+    }
 
     public void setRampClosedLoop(double rate) {
-    };
+    }
 
     public void setRampOpenLoop(double rate) {
-    };
-
-    // @SuppressWarnings("removal")
-    // void setConfig(SparkFlex motor, int followID, MotorConfigs motorC) {
-    // SparkMaxConfig config = new SparkMaxConfig();
-    // if (followID > 0) {
-    // config.follow(followId);
-    // }
-    // config.inverted(motorC.inverted);
-    // config.idleMode(motorC.brakeMode ? IdleMode.kBrake : IdleMode.kCoast);
-
-    // config.closedLoop.feedbackSensor(FeedbackSensor.kPrimaryEncoder);
-    // config.closedLoop.pidf(motorC.kP, motorC.kI, motorC.kD, motorC.kFF);
-    // // config.closedLoop.maxOutput(motorC.maxOutput);
-    // //config.closedLoop.smartMotion.maxVelocity(motorC.maxVelocity);
-    // //config.closedLoop.smartMotion.maxAcceleration(motorC.maxAcceration);
-    // config.closedLoop.maxMotion.maxVelocity(motorC.maxVelocity);
-    // config.closedLoop.maxMotion.maxAcceleration(motorC.maxAcceration);
-    // config.smartCurrentLimit(motorC.currentLimit);
-    // config.openLoopRampRate(motorC.openLoopRampRate);
-    // config.closedLoopRampRate(motorC.openLoopRampRate);
-    // motor.configure(config, ResetMode.kResetSafeParameters,
-    // PersistMode.kPersistParameters);
-    // }
+    }
 
     public double getSpeed() {
         return motor.get();
@@ -354,6 +319,7 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
 
     enum Modes {
         POSITION, VELOCITY, MOTIONMAGIC, SPEED;
+
         public Modes next() {
             Modes[] values = Modes.values();
             int nextOrdinal = (this.ordinal() + 1) % values.length;

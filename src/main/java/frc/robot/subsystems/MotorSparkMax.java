@@ -264,13 +264,14 @@ public class MotorSparkMax extends SubsystemBase {
     }
 
     public void periodic() {
-        if (Robot.count % 10 == 0) {
-            SmartDashboard.putNumber(name + " Pos", getPos());  // display position in rotations
-            SmartDashboard.putNumber(name + " Revs", getPos() / positionConversionFactor); //display position based on conversion factor
-            SmartDashboard.putNumber(name + " Cur", round2(motor.getOutputCurrent())); //display motor current
-            SmartDashboard.putNumber(name + " Vel", round2(getSpeed())); //display speed in  revolutions per minute
-            SmartDashboard.putString("Mode", mode.toString()); //display mode 
-            SmartDashboard.putNumber(name + " RPM", round2(getSpeed() / velocityConversionFactor / 60)); //display speed in  revolutions per minute
+        if (Robot.count % 1  == 0) {
+            SmartDashboard.putNumber(name + " Pos", getPos());
+            SmartDashboard.putNumber(name + " Revs", getPos() / positionConversionFactor);
+            SmartDashboard.putNumber(name + " Cur", round2(motor.getOutputCurrent()));
+            SmartDashboard.putNumber(name + " Vel", round2(getSpeed()));
+            SmartDashboard.putString("Mode", mode.toString());
+            SmartDashboard.putNumber(name + " RPM", round2(getSpeed() / velocityConversionFactor / 60));
+
             logPeriodic();
             if (testMode)
                 testCases();
@@ -309,19 +310,6 @@ public class MotorSparkMax extends SubsystemBase {
                 logf("%s\n", getMotorVCS(followMotor));
         }
     }
-
-    // public void logAllMotor() {
-    //     if (followId > 0) {
-    //         logf("%s,bv,%.2f,%.2f,av,%.2f,%.2f,oc,%.2f,%.2f,sp,%.2f,%.2f,enc,%.0f,%.0f,vel,%.3f,%.3f\n", name,
-    //                 motor.getBusVoltage(), followMotor.getBusVoltage(), motor.getAppliedOutput(),
-    //                 followMotor.getAppliedOutput(), motor.getOutputCurrent(), followMotor.getOutputCurrent(),
-    //                 motor.get(), followMotor.get(), relEncoder.getPosition(), relEncoderFollow.getPosition(),
-    //                 relEncoder.getVelocity(), relEncoderFollow.getVelocity());
-    //     } else {
-    //         logf("%s motor volts:%.2f cur:%.2f sp:%.2f\n", name, motor.getBusVoltage(), motor.getOutputCurrent(),
-    //                 motor.get());
-    //     }
-    // }
 
     enum Modes {
         POSITION, VELOCITY, MOTIONMAGIC, SPEED;

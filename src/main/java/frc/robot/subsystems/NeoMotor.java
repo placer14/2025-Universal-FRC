@@ -19,8 +19,9 @@ public class NeoMotor extends SubsystemBase {
   // private SparkPIDController m_pidController;
 
   public NeoMotor(XboxController driveHID) {
-    logf("Create Neo Motor\n");
+   
     int motorID = 20; // Replace with the actual CAN ID of your NEO
+    logf("Create Neo Motor at ID:%d\n", motorID);
     m_motor = new SparkMax(motorID, MotorType.kBrushless);
     this.driveHID = driveHID;
     // Factory reset, just in case
