@@ -3,6 +3,7 @@ package frc.robot;
 // import static frc.robot.Robot.yaw;
 import static frc.robot.utilities.Util.logf;
 
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix6.hardware.CANcoder;
 
 import edu.wpi.first.math.filter.Debouncer;
@@ -26,6 +27,7 @@ import frc.robot.subsystems.MotorFlex;
 import frc.robot.subsystems.MotorKraken;
 import frc.robot.subsystems.MotorSRX;
 import frc.robot.subsystems.MotorSparkMax;
+import frc.robot.subsystems.PID;
 import frc.robot.subsystems.TestTriggers;
 
 /**
@@ -109,13 +111,25 @@ public class RobotContainer {
         break;
       case MiniMini:
         MotorSRX redMotor = new MotorSRX("RedMotor", 10, -1, true);
+        PID positionPID = new PID("Pos", .08, 0, 0, 0, 0, -1, 1, true);
+        PID velocityPID = new PID("Vel", .005, 0, 0, 0, 1.5, -1, 1, true);
+        // Motion Magic messes things up positionPID.setMotionMagicSRX(.5, 2.0);
+        redMotor.setPositionPID(positionPID, 0, FeedbackDevice.QuadEncoder); // set pid for SRX
+        redMotor.setVelocityPID(velocityPID, 1, FeedbackDevice.QuadEncoder);
+        redMotor.setEncoderPosition(0);
+        // redMotor.setTestMode(true);
+        
+
         MotorFlex neoMotor = new MotorFlex("FlexMotor", 3, -1, true);
+        // redMotor.setUpForTestCases(leds);
+        // redMotor.setLogging(true);
+        //redMotor.setEncoderTicksPerRev(2048);
         Command redMoveCmd = Commands.run(() -> redMotor.setSpeed(driveController.getLeftTriggerAxis()), redMotor);
-        Command neoMoveCmd = Commands.run(() -> neoMotor.setSpeed(driveController.getLeftTriggerAxis()), neoMotor);
+        Command neoMoveCmd = Commands.run(() -> neoMotor.setSpeed(driveController.getRightTriggerAxis()), neoMotor);
         new ScheduleCommand(Commands.parallel(redMoveCmd, neoMoveCmd).ignoringDisable(true)).schedule();
-        // Command miniMove = Commands.run(() -> mmmotor.setSpeed(driveController.getLeftTriggerAxis()), mmmotor);
-        // driveController.start().onTrue(miniMove);
-        // new ScheduleCommand(miniMove);
+        Command miniMove = Commands.run(() -> mmmotor.setSpeed(driveController.getLeftTriggerAxis()), mmmotor);
+        driveController.start().onTrue(miniMove);
+        new ScheduleCommand(miniMove);
         break;
       case MiniSRX: // Test mini
         // Use Talon SRX for drive train
