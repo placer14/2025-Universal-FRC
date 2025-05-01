@@ -130,7 +130,7 @@ public class MotorSparkMax extends SubsystemBase {
                 .p(0.001, ClosedLoopSlot.kSlot1)
                 .i(0, ClosedLoopSlot.kSlot1)
                 .d(0.015, ClosedLoopSlot.kSlot1)
-                .velocityFF(1.0 / 5767, ClosedLoopSlot.kSlot1)
+                .velocityFF(1.0 / 5767, ClosedLoopSlot.kSlot1)   // Note 5767 is max speed for Velocity PIDs
                 .outputRange(-1, 1, ClosedLoopSlot.kSlot1);
 
         motorConfig.closedLoop.maxMotion

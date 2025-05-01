@@ -15,8 +15,8 @@ public class PID extends SubsystemBase {
   public double kF = 0;
   public double kMaxOutput = 1;
   public double kMinOutput = -1;
-  public double kMaxAccelation = 0;
-  public double kMaxVelocity = 0;
+  public double kA = 0;
+  public double kV = 0;
   private boolean smart = false;
 
   public double maxIntegralAccumulation;
@@ -106,7 +106,7 @@ public class PID extends SubsystemBase {
 
   public void setMotionMagicSRX(double kMaxVelocity, double kMaxAcceleration) {
     this.kMinOutput = kMaxVelocity;
-    this.kMaxAccelation = kMaxAcceleration;
+    this.kA = kMaxAcceleration;
   }
 
   public void setMinMax(double min, double max) {
