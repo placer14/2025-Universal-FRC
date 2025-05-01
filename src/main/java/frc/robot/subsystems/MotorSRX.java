@@ -219,17 +219,24 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
     motor.getSensorCollection().setQuadraturePosition((int) position, Robot.config.kTimeoutMs);
   }
 
+  
+
+  public void forcePercentMode() {
+    motor.set(ControlMode.PercentOutput, 0.001);
+  }
+
   public void setPositionPID(PID pid, int slot, FeedbackDevice feedBack) {
     feedBackDevice = feedBack;
     setPositionPID(slot, pid);
     PIDToMotor(pid, slot, Robot.config.kTimeoutMs);
   }
 
-  public void forcePercentMode() {
-    motor.set(ControlMode.PercentOutput, 0.001);
+  public void setVelocityPID(PID pid, int slot, FeedbackDevice feedBack) { // tod at some point fix this name
+    feedBackDevice = feedBack;
+    PIDToMotor(pid, slot, Robot.config.kTimeoutMs);
   }
 
-  public void setVelocityPID(PID pid, int slot, FeedbackDevice feedBack) { // tod at some point fix this name
+  public void setMotionMagicPID(PID pid, int slot, FeedbackDevice feedBack) { // tod at some point fix this name
     feedBackDevice = feedBack;
     PIDToMotor(pid, slot, Robot.config.kTimeoutMs);
   }
@@ -252,10 +259,11 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
     motor.config_IntegralZone(slot, (int) pid.kIz, timeout);
     motor.configAllowableClosedloopError(slot, pid.allowableCloseLoopError, timeout);
     motor.configMaxIntegralAccumulator(slot, pid.maxIntegralAccumulation, timeout);
-    if (pid.kMaxVelocity > 0) {
+    if (pid.kV > 0) {
       // Set parameters for motion magic
-      motor.configMotionCruiseVelocity(pid.kMaxVelocity);
-      motor.configMotionAcceleration(pid.kMaxAccelation);
+      motor.configMotionCruiseVelocity(pid.kV);
+      motor.configMotionAcceleration(pid.kA);
+      motor.configAllSettings(null);
     }
     logf("Setup %s PID for %s slot %d %s\n", pid.name, name, slot, pid.getPidData());
   }
@@ -335,18 +343,54 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
     motor.configOpenloopRamp(rate);
   }
 
-  public void setUpForTestCases(LedSubsystem leds) {
+  // Example settings for motion magic
+  // slot0.kS = 0.25; // Add 0.25 V output to overcome static friction
+  // slot0.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
+  // slot0.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
+  // slot0.kP = 60; // A position error of 0.2 rotations results in 12 V output
+  // slot0.kI = 0; // No output for integrated error
+  // slot0.kD = 0.5; // A velocity error of 1 rps results in 0.5 V output
+
+  // Setting the Feed Forward for a velcity PID
+  // Using Tuner (Self-test Snapshot or Plotter), we’ve measured a peak velocity of 9326 native units per 100ms at 100% output. 
+  // Get peak velocity - this can also be retrieved using getSelectedSensorVelocity (routine or VI).
+  // They measured a peak velocity of 9326 native units per 100ms at 100% output. 
+  // However, many mechanical systems and motors are not perfectly linear (though they are close). 
+  // To account for this, we should calculate our feed forward using a measured velocity around the percent output we will usually run the motor.
+  // For our mechanism, we will typically be running the motor ~75% output. 
+  // We then use Tuner (Self-test Snapshot or Plotter) to measure our velocity - in this case, we measure a velocity of 7112 native units per 100ms.
+  // Now let’s calculate a Feed-forward gain so that 75% motor output is calculated when the requested speed is 7112 native units per 100ms.
+  // F-gain = (75% X 1023) / 7112 F-gain = 0.1079
+  // Let’s check our math, if the target speed is 7112 native units per 100ms, 
+  // Closed-loop output will be (0.1079 X 7112) => 767.38 (75% of full forward).
+
+
+  public void setupForTestCasesRedMotor(LedSubsystem leds) {
+    PID positionPID = new PID("Pos", 0.08, 0, 0, 0, 0, -1, 1, false);
+    PID velocityPID = new PID("Vel", .005, 0, 0, 0, 1.5, -1, +1, false);
+    PID motionMagicPID = new PID("Pos", 0.08, 0, 0, 0, 0, -1, 1, true);
+    setUpForTestCases(positionPID, velocityPID, motionMagicPID, leds);
+  }
+
+  public void setupForTestCasesGrayMotor(LedSubsystem leds) {
+    PID positionPID = new PID("Pos", 0.08, 0, 0, 0, 0, -1, 1, true);
+    PID velocityPID = new PID("Vel", .005, 0, 0, 0, 1.5, -1, +1, true);
+    PID motionMagicPID = new PID("Pos", 0.08, 0, 0, 0, 0, -1, 1, true);
+    setUpForTestCases(positionPID, velocityPID, motionMagicPID, leds);
+  }
+
+  public void setUpForTestCases(PID positionPID, PID velocityPID, PID motionMagicPID, LedSubsystem leds) {
     logf("Start of Test SRX Subsystem\n");
     setInverted(true);
     setSensorPhase(true);
     enableLimitSwitch(false, false);
-    PID positionPID = new PID("Pos", 0.08, 0, 0, 0, 0, -1, 1, true);
     positionPID.showPID();
-    PID velocityPID = new PID("Vel", .005, 0, 0, 0, 1.5, -1, +1, true);
     velocityPID.showPID();
+    motionMagicPID.showPID();
     // Motion Magic messes things up positionPID.setMotionMagicSRX(.5, 2.0);
     setPositionPID(positionPID, 0, FeedbackDevice.QuadEncoder); // set pid for SRX
     setVelocityPID(velocityPID, 1, FeedbackDevice.QuadEncoder);
+    setMotionMagicPID(motionMagicPID, 2, FeedbackDevice.QuadEncoder);
     setEncoderPosition(0);
     setSmartTicks(5); // Set to update SmartDashBoard every 100 milli seconds
     enableTestMode = true;

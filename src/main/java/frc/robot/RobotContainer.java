@@ -135,9 +135,10 @@ public class RobotContainer {
         // Use Talon SRX for drive train
         drivetrainSRX = new DrivetrainSRX(driveHID);
         // Setup to test Flex Motor
-        boolean testFlex = false;
+        boolean testFlex = true;
         if (testFlex) {
           MotorFlex mmotor = new MotorFlex("TestFlex", 10, -1, false);
+          mmotor.setLeds(leds);
           mmotor.setLogging(true);
           mmotor.setTestMode(true);
         }
@@ -153,10 +154,15 @@ public class RobotContainer {
           motorK.setLogging(true);
           motorK.setTestMode(true);
         }
-        boolean testSRX = true;
+        boolean testSRX = false;
+        boolean testRedMotor = true;
         if (testSRX) {
           MotorSRX motorSRX = new MotorSRX("SRX", 14, 0, true);
-          motorSRX.setUpForTestCases(leds);
+          if(testRedMotor) {
+          motorSRX.setupForTestCasesRedMotor(leds);
+          } else {
+            motorSRX.setupForTestCasesGrayMotor(leds);
+          }
           motorSRX.setLogging(true);
         }
         // Command miniSRXMove = Commands.run(() ->
