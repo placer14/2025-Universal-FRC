@@ -336,12 +336,13 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
     @Override
     public void periodic() {
         if (Robot.count % 1 == 0) {
-            SmartDashboard.putNumber(name + " Pos", getPos());
-            SmartDashboard.putNumber(name + " Rot", getPos() / positionConversionFactor);
-            SmartDashboard.putNumber(name + " Cur", round2(motor.getOutputCurrent()));
-            SmartDashboard.putNumber(name + " Vel", round2(getActualVelocity()));
-            SmartDashboard.putNumber(name + " RPM", round2(getActualVelocity() / velocityConversionFactor / 60));
+            SmartDashboard.putNumber("Pos", getPos());
+            SmartDashboard.putNumber("Rot", getPos() / positionConversionFactor);
+            SmartDashboard.putNumber("Cur", round2(motor.getOutputCurrent()));
+            SmartDashboard.putNumber("Vel", round2(getActualVelocity()));
+            SmartDashboard.putNumber("RPM", round2(getActualVelocity() / velocityConversionFactor / 60));
             SmartDashboard.putString("Mode", mode.toString());
+            SmartDashboard.putNumber("Err", getError());
             logPeriodic();
             if (enableTestMode)
                 testCases();
@@ -364,7 +365,7 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
 
     Modes mode = Modes.POSITION;
     boolean lastStart = false;
-    double lastValue = 0;
+    double setP = 0;
 
     void testCases() {
         CommandXboxController driveController = RobotContainer.driveController;
@@ -372,9 +373,8 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
         // Hiting the start button moves to the next control method
         boolean start = driveController.start().getAsBoolean();
         if (start && !lastStart) {
-            setVelocity(0.0);
             setSpeed(0.0);
-            setPos(0.0);
+            relEncoder.setPosition(0.0);
             mode = mode.next(); // Get the next mode
             logf("New Test Mode:%s\n", mode);
         }
@@ -384,7 +384,7 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
                 value = driveController.getHID().getPOV() / 22.5;
                 if (value >= 0.0) {
                     setPos(value);
-                    lastValue = value;
+                    setP = value;
                     logf("Flex set position:%.2f\n", value);
                 }
                 break;
@@ -392,7 +392,7 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
                 value = driveController.getHID().getPOV() * 20;
                 if (value >= 0) {
                     setVelocity(value);
-                    lastValue = value;
+                    setP = value;
                     logf("Flex set velocity:%.2f\n", value);
                 }
                 break;
@@ -400,7 +400,7 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
                 value = driveController.getHID().getPOV() / 5.0;
                 if (value >= 0) {
                     setMagicPositon(value);
-                    lastValue = value;
+                    setP = value;
                     logf("Flex set positon Magic Motion:%.2f\n", value);
                 }
                 break;
@@ -408,7 +408,7 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
                 value = driveController.getHID().getPOV() * 20;
                 if (value >= 0) {
                     setMagicVelocity(value);
-                    lastValue = value;
+                    setP = value;
                     logf("Flex set velocity Maguc Motion:%.2f\n", value);
                 }
                 break;
@@ -416,11 +416,11 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
                value = robotContainer.getSpeedFromTriggers();
                 if (value > 0.05)
                     logf("Set Test speed:%.2f\n", value);
-                    lastValue = value;
+                    setP = value;
                 setSpeed(value);
                 break;
         }
-        SmartDashboard.putNumber("SetP", lastValue);
+        SmartDashboard.putNumber("SetP", setP);
         leds.setAllColors(0, 0, 0);
         leds.setRangeOfColor(0, mode.ordinal(), 0, 127, 0);
     }

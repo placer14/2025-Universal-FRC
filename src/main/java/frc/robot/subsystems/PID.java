@@ -113,8 +113,8 @@ public class PID extends SubsystemBase {
     kMaxOutput = max;
     kMinOutput = min;
     if (smart) {
-      SmartDashboard.putNumber(name + " Mx", kMaxOutput);
-      SmartDashboard.putNumber(name + " Mi", kMinOutput);
+      SmartDashboard.putNumber("Mx", kMaxOutput);
+      SmartDashboard.putNumber("Mi", kMinOutput);
     }
   }
 

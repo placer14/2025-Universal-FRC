@@ -118,61 +118,58 @@ public class MotorSparkMax extends SubsystemBase {
         // feedback sensor as the primary encoder.
         motorConfig.closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-                // Set PID values for position control. We don't need to pass a closed
-                // loop slot, as it will default to slot 0.
-                .p(0.2)  // was .2
-                .i(0)
-                .d(2)  // was 1
-                .outputRange(-1, 1);
+                // Set PID values for position control in slot 0
+                .p(0.2, ClosedLoopSlot.kSlot0)
+                .i(0, ClosedLoopSlot.kSlot0)
+                .d(2, ClosedLoopSlot.kSlot0) // was 1
+                .outputRange(-1, 1, ClosedLoopSlot.kSlot0);
 
         motorConfig.closedLoop
                 // Set PID values for velocity control in slot 1
-                .p(0.001, ClosedLoopSlot.kSlot1)
+                .p(0.0001, ClosedLoopSlot.kSlot1)
                 .i(0, ClosedLoopSlot.kSlot1)
-                .d(0.015, ClosedLoopSlot.kSlot1)
-                .velocityFF(1.0 / 5767, ClosedLoopSlot.kSlot1)   // Note 5767 is max speed for Velocity PIDs
+                .d(0, ClosedLoopSlot.kSlot1)
+                .velocityFF(1.0 / 5767, ClosedLoopSlot.kSlot1) // Note 5767 is max speed for Velocity PIDs
                 .outputRange(-1, 1, ClosedLoopSlot.kSlot1);
 
+        motorConfig.closedLoop
+                .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+                // Set PID values for motion position control in slot 2
+                .p(1, ClosedLoopSlot.kSlot2)
+                .i(0, ClosedLoopSlot.kSlot2)
+                .d(0, ClosedLoopSlot.kSlot2) // was 1
+                .outputRange(-1, 1, ClosedLoopSlot.kSlot2);
+
+        motorConfig.closedLoop
+                .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+                // Set PID values for motion velocity control in slot 3
+                .p(0.0002, ClosedLoopSlot.kSlot3)
+                .i(0, ClosedLoopSlot.kSlot3)
+                .d(0, ClosedLoopSlot.kSlot3) // was 1
+                .outputRange(-1, 1, ClosedLoopSlot.kSlot3);
+
         motorConfig.closedLoop.maxMotion
-                // Set MAXMotion parameters for position control. We don't need to pass
-                // a closed loop slot, as it will default to slot 0.
-                .maxVelocity(4000)
-                .maxAcceleration(3000)
-                .allowedClosedLoopError(.05)
                 // Set MAXMotion parameters for velocity control in slot 1
                 .maxAcceleration(3000, ClosedLoopSlot.kSlot1) // Was 500
                 .maxVelocity(6000, ClosedLoopSlot.kSlot1)
-                .allowedClosedLoopError(.1, ClosedLoopSlot.kSlot1);
+                .allowedClosedLoopError(.1, ClosedLoopSlot.kSlot1)
+                // Set MAXMotion parameters for position control in slot 2
+                .maxAcceleration(3000, ClosedLoopSlot.kSlot2) // Was 500
+                .maxVelocity(6000, ClosedLoopSlot.kSlot2)
+                .allowedClosedLoopError(.1, ClosedLoopSlot.kSlot2)
+                // Set MAXMotion parameters for velocity control in slot 3
+                .maxAcceleration(3000, ClosedLoopSlot.kSlot3) // Was 500
+                .maxVelocity(6000, ClosedLoopSlot.kSlot3)
+                .allowedClosedLoopError(.1, ClosedLoopSlot.kSlot3);
 
-        /*
-         * Apply the configuration to the SPARK MAX.
-         *
-         * kPersistParameters is used to ensure the configuration is not lost when
-         * the SPARK MAX loses power. This is useful for power cycles that may occur
-         * mid-operation.
-         */
+        // Apply the configuration to the SPARK MAX.
+        // kPersistParameters is used to ensure the configuration is not lost when
+        // the SPARK MAX loses power. This is useful for power cycles that may occur
         motor.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 
-    public void setBrakeMode(boolean value) {
-        motorConfig.idleMode(value ? IdleMode.kBrake : IdleMode.kCoast);
-    }
-
-    // @SuppressWarnings("removal")
-    // void setConfig(SparkMax motor, int followID, MotorConfigs motorC) {
-    // SparkMaxConfig config = new SparkMaxConfig();
-    // if (followID > 0) {
-    // config.follow(followId);
-    // }
-    // config.inverted(motorC.inverted);
-    // config.idleMode(motorC.brakeMode ? IdleMode.kBrake : IdleMode.kCoast);
-    // config.encoder.positionConversionFactor(motorC.positionConversionFactor);
-    // config.encoder.velocityConversionFactor(motorC.velocityConversionFactor);
-    // config.limitSwitch.forwardLimitSwitchEnabled(motorC.forwardLimit);
-    // config.limitSwitch.reverseLimitSwitchEnabled(motorC.reverseLimit);
-    // config.closedLoop.feedbackSensor(FeedbackSensor.kPrimaryEncoder);
     // config.closedLoop.pidf(motorC.kP, motorC.kI, motorC.kD, motorC.kFF);
-    // //config.closedLoop.maxOutput(motorC.maxOutput);
+    // config.closedLoop.maxOutput(motorC.maxOutput);
     // config.closedLoop.smartMotion.maxVelocity(motorC.maxVelocity);
     // config.closedLoop.smartMotion.maxAcceleration(motorC.maxAcceration);
     // config.closedLoop.maxMotion.maxVelocity(motorC.maxVelocity);
@@ -180,9 +177,10 @@ public class MotorSparkMax extends SubsystemBase {
     // config.smartCurrentLimit(motorC.currentLimit);
     // config.openLoopRampRate(motorC.openLoopRampRate);
     // config.closedLoopRampRate(motorC.openLoopRampRate);
-    // motor.configure(config, ResetMode.kResetSafeParameters,
-    // PersistMode.kPersistParameters);
-    // }
+
+    public void setBrakeMode(boolean value) {
+        motorConfig.idleMode(value ? IdleMode.kBrake : IdleMode.kCoast);
+    }
 
     public double getSpeed() {
         return relEncoder.getVelocity();
@@ -199,9 +197,25 @@ public class MotorSparkMax extends SubsystemBase {
         lastSpeed = speed;
     }
 
+    public void setPos(double position) {
+        lastDesiredPosition = position;
+        motor.getClosedLoopController().setReference(position, ControlType.kPosition, ClosedLoopSlot.kSlot0);
+    }
+
     public void setVelocity(double velocity) {
-        motor.getClosedLoopController().setReference(velocity, SparkFlex.ControlType.kMAXMotionVelocityControl,
+        motor.getClosedLoopController().setReference(velocity, SparkFlex.ControlType.kVelocity,
                 ClosedLoopSlot.kSlot1);
+    }
+
+    public void setPosMotionMagic(double position) {
+        lastDesiredPosition = position;
+        motor.getClosedLoopController().setReference(position, ControlType.kMAXMotionPositionControl,
+                ClosedLoopSlot.kSlot2);
+    }
+
+    public void setVelocityMotionMagic(double velocity) {
+        motor.getClosedLoopController().setReference(velocity, SparkFlex.ControlType.kMAXMotionVelocityControl,
+                ClosedLoopSlot.kSlot3);
     }
 
     public void stopMotor() {
@@ -228,11 +242,6 @@ public class MotorSparkMax extends SubsystemBase {
         return relEncoder.getPosition();
     }
 
-    public void setPos(double position) {
-        lastDesiredPosition = position;
-        motor.getClosedLoopController().setReference(position, ControlType.kPosition);
-    }
-
     public void zeroEncoder() {
         relEncoder.setPosition(0);
     }
@@ -254,28 +263,28 @@ public class MotorSparkMax extends SubsystemBase {
         if (pos != lastPos) {
             lastPos = pos;
             if (myLogging) {
+                logf("%s\n", getMotorVCS(motor));
                 if (followId > 0) {
-                    logf(getMotorVCS(motor) + getMotorVCS(followMotor));
-                } else {
-                    logf(getMotorVCS(motor));
+                    logf("%s\n", getMotorVCS(followMotor));
                 }
             }
         }
     }
 
     public void periodic() {
-        if (Robot.count % 1  == 0) {
-            SmartDashboard.putNumber(name + " Pos", getPos());
-            SmartDashboard.putNumber(name + " Revs", getPos() / positionConversionFactor);
-            SmartDashboard.putNumber(name + " Cur", round2(motor.getOutputCurrent()));
-            SmartDashboard.putNumber(name + " Vel", round2(getSpeed()));
+        if (Robot.count % 1 == 0) {
+            SmartDashboard.putNumber("Pos", getPos());
+            SmartDashboard.putNumber("Cur", round2(motor.getOutputCurrent()));
+            SmartDashboard.putNumber("Vel", round2(getSpeed()));
             SmartDashboard.putString("Mode", mode.toString());
-            SmartDashboard.putNumber(name + " RPM", round2(getSpeed() / velocityConversionFactor / 60));
-
-            logPeriodic();
-            if (testMode)
-                testCases();
+            SmartDashboard.putNumber("RPM", round2(getSpeed() / velocityConversionFactor / 60));
+            SmartDashboard.putNumber("Err", getError());
         }
+        if (Robot.count % 10 == 0) {
+            logPeriodic();
+        }
+        if (testMode)
+            testCases();
     }
 
     void testTimes() {
@@ -306,13 +315,13 @@ public class MotorSparkMax extends SubsystemBase {
     public void logMotorVCS() {
         if (Math.abs(getLastSpeed()) > .01) {
             logf("%s\n", getMotorVCS(motor));
-            if (followId > 0) 
+            if (followId > 0)
                 logf("%s\n", getMotorVCS(followMotor));
         }
     }
 
     enum Modes {
-        POSITION, VELOCITY, MOTIONMAGIC, SPEED;
+        POSITION, VELOCITY, POSMOTIONMAGIC, VELMOTIONMAGIC, SPEED;
 
         public Modes next() {
             Modes[] values = Modes.values();
@@ -323,6 +332,7 @@ public class MotorSparkMax extends SubsystemBase {
 
     Modes mode = Modes.POSITION;
     boolean lastStart = false;
+    double setPoint = 0;
 
     void testCases() {
         CommandXboxController driveController = RobotContainer.driveController;
@@ -330,9 +340,8 @@ public class MotorSparkMax extends SubsystemBase {
         // Hiting the start button moves to the next control method
         boolean start = driveController.start().getAsBoolean();
         if (start && !lastStart) {
-            setVelocity(0.0);
-            setSpeed(0.0);
-            setPos(0.0);
+            stopMotor();
+            setEncoderPosition(0.0);
             mode = mode.next(); // Get the next mode
             logf("New Test Mode:%s\n", mode);
         }
@@ -342,26 +351,42 @@ public class MotorSparkMax extends SubsystemBase {
                 value = driveController.getHID().getPOV() / 10.0;
                 if (value >= 0.0) {
                     setPos(value);
-                    logf("Flex set position:%.6f\n", value);
-                    SmartDashboard.putNumber("SetP", value);
+                    setPoint = value;
+                    logf("Max set position:%.6f\n", value);
                 }
                 break;
             case VELOCITY:
                 value = driveController.getHID().getPOV() * 20.0;
                 if (value >= 0.0) {
                     setVelocity(value);
-                    logf("Flex set velocity:%.2f\n", value);
-                    SmartDashboard.putNumber("SetV", value);
+                    setPoint = value;
+                    logf("Max set velocity:%.2f\n", value);
                 }
                 break;
-            case MOTIONMAGIC:
+            case POSMOTIONMAGIC:
+                value = driveController.getHID().getPOV() / 10.0;
+                if (value >= 0.0) {
+                    setPosMotionMagic(value);
+                    setPoint = value;
+                    logf("Max set position motion magic:%.6f\n", value);
+                }
+                break;
+            case VELMOTIONMAGIC:
+                value = driveController.getHID().getPOV() * 20.0;
+                if (value >= 0.0) {
+                    setVelocityMotionMagic(value);
+                    setPoint = value;
+                    logf("Max set velocity motion magic:%.2f\n", value);
+                }
                 break;
             case SPEED:
-                double mySpeed = robotContainer.getSpeedFromTriggers();
-                if (mySpeed > 0.05)
-                    logf("Set Test speed:%.2f\n", mySpeed);
-                setSpeed(mySpeed);
+                value = robotContainer.getSpeedFromTriggers();
+                if (value > 0.05)
+                    logf("Set Test speed:%.2f\n", value);
+                setSpeed(value);
+                setPoint = value;
                 break;
         }
+        SmartDashboard.putNumber("SetP", setPoint);
     }
 }

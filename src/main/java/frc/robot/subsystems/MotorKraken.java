@@ -127,11 +127,12 @@ public class MotorKraken extends SubsystemBase {
     double pos = motor.getPosition().getValueAsDouble();
     double velocity = motor.getVelocity().getValueAsDouble();
     double current = motor.getStatorCurrent().getValueAsDouble();
-    SmartDashboard.putNumber(name + " Err", err);
-    SmartDashboard.putNumber(name + " Enc", pos);
-    SmartDashboard.putNumber(name + " Vel", velocity);
-    SmartDashboard.putNumber(name + " RPM", velocity * 60.0); // Get Velocity in PRM
-    SmartDashboard.putNumber(name + " Cur", current);
+    SmartDashboard.putNumber("Err", err);
+    SmartDashboard.putNumber("Pos", pos);
+    SmartDashboard.putNumber("Vel", velocity);
+    SmartDashboard.putNumber("RPM", velocity * 60.0); // Get Velocity in PRM
+    SmartDashboard.putNumber("Cur", current);
+    SmartDashboard.putNumber("SetP", setP);
     SmartDashboard.putString("Mode:", mode.toString());
     if (Math.abs(velocity) > 0.05 && myLogging && Robot.count % 10 == 0) {
       logf("%s velocity:%.2f RPM:%.2f current:%.2f pos:%.2f err:%.2f\n", name, velocity, velocity * 60.0, current, pos,
@@ -153,7 +154,7 @@ public class MotorKraken extends SubsystemBase {
 
   Modes mode = Modes.POSITION;
   boolean lastStart = false;
-  double lastValue = 0.0;
+  double setP = 0;
 
   void testCases() {
     CommandXboxController driveController = RobotContainer.driveController;
@@ -161,9 +162,8 @@ public class MotorKraken extends SubsystemBase {
     // Hiting the start button moves to the next control method
     boolean start = driveController.start().getAsBoolean();
     if (start && !lastStart) {
-      setVelocity(0.0);
-      setSpeed(0.0);
-      setPos(0.0);
+      setSpeed(0);
+      motor.setPosition(0);
       mode = mode.next(); // Get the next mode
       logf("New Test Mode:%s\n", mode);
     }
@@ -173,38 +173,34 @@ public class MotorKraken extends SubsystemBase {
         value = driveController.getHID().getPOV() / 10.0;
         if (value >= 0.0) {
           setPos(value);
-          SmartDashboard.putNumber(name + " SetP", value);
+          setP = value;
           logf("%s set position:%.2f\n", name, value);
         }
         break;
       case VELOCITY:
         // POV 270 degrees is 100
         value = driveController.getHID().getPOV() / (270.0 / 100.0);
-        if (lastValue != value) {
-          lastValue = value;
-          if (value >= 0) {
-            SmartDashboard.putNumber(name + " SetP", value);
-            setVelocity(value);
-            logf("%s set velocity:%.2f\n", name, value);
-          }
+        setP = value;
+        if (value >= 0) {
+          setVelocity(value);
+          logf("%s set velocity:%.2f\n", name, value);
         }
         break;
       case MOTIONMAGIC:
         value = driveController.getHID().getPOV() / 10.0;
-        if (lastValue != value) {
-          lastValue = value;
-          if (value >= 0) {
-            SmartDashboard.putNumber(name + " SetP", value);
-            setPositionMotionMagic(value);
-            logf("%s set magic mition position:%.2f\n", name, value);
-          }
+        setP = value;
+        if (value >= 0) {
+          setPositionMotionMagic(value);
+          logf("%s set magic mition position:%.2f\n", name, value);
         }
         break;
       case SPEED:
-        double mySpeed = robotContainer.getSpeedFromTriggers();
-        if (mySpeed > 0.05)
-          logf("Set Test speed:%.2f\n", mySpeed);
-        setSpeed(mySpeed);
+        value = robotContainer.getSpeedFromTriggers();
+        if (value > 0.05) {
+          logf("Set Test speed:%.2f\n", value);
+          setP = value;
+        }
+        setSpeed(value);
         break;
     }
   }
