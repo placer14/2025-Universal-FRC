@@ -183,12 +183,13 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
   }
 
   public void updateSmart() {
-    SmartDashboard.putString(name + " Mode", mode.toString());
-    SmartDashboard.putNumber(name + " Pos", (int) motor.getSensorCollection().getQuadraturePosition());
-    SmartDashboard.putNumber(name + " Cur", round2(getMotorCurrent()));
-    SmartDashboard.putNumber(name + " Vel", round2(getActualVelocity()));
-    SmartDashboard.putBoolean(name + " forL", getForwardLimitSwitch());
-    SmartDashboard.putBoolean(name + " revL", getReverseLimitSwitch());
+    SmartDashboard.putString("Mode", mode.toString());
+    SmartDashboard.putNumber("Pos", (int) motor.getSensorCollection().getQuadraturePosition());
+    SmartDashboard.putNumber("Cur", round2(getMotorCurrent()));
+    SmartDashboard.putNumber("Vel", round2(getActualVelocity()));
+    SmartDashboard.putNumber("Err", getError());
+    SmartDashboard.putBoolean("forL", getForwardLimitSwitch());
+    SmartDashboard.putBoolean("revL", getReverseLimitSwitch());
   }
 
   public void setSpeed(double speed) {
@@ -218,8 +219,6 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
   public void setEncoderPosition(double position) {
     motor.getSensorCollection().setQuadraturePosition((int) position, Robot.config.kTimeoutMs);
   }
-
-  
 
   public void forcePercentMode() {
     motor.set(ControlMode.PercentOutput, 0.001);
@@ -366,35 +365,34 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
   // Closed-loop output will be (0.1079 X 7112) => 767.38 (75% of full forward).
 
 
-  public void setupForTestCasesRedMotor(LedSubsystem leds) {
+  public void setupForTestCasesRedMotor(boolean enableTest, LedSubsystem leds) {
     PID positionPID = new PID("Pos", 0.08, 0, 0, 0, 0, -1, 1, false);
     PID velocityPID = new PID("Vel", .005, 0, 0, 0, 1.5, -1, +1, false);
-    PID motionMagicPID = new PID("Pos", 0.08, 0, 0, 0, 0, -1, 1, true);
-    setUpForTestCases(positionPID, velocityPID, motionMagicPID, leds);
+    PID motionMagicPID = new PID("MM", 0.08, 0, 0, 0, 0, -1, 1, true);
+    setUpForTestCases(positionPID, velocityPID, motionMagicPID, enableTest, leds);
   }
 
-  public void setupForTestCasesGrayMotor(LedSubsystem leds) {
+  public void setupForTestCasesGrayMotor(boolean enableTest, LedSubsystem leds) {
     PID positionPID = new PID("Pos", 0.08, 0, 0, 0, 0, -1, 1, true);
     PID velocityPID = new PID("Vel", .005, 0, 0, 0, 1.5, -1, +1, true);
-    PID motionMagicPID = new PID("Pos", 0.08, 0, 0, 0, 0, -1, 1, true);
-    setUpForTestCases(positionPID, velocityPID, motionMagicPID, leds);
+    PID motionMagicPID = new PID("MM", 0.08, 0, 0, 0, 0, -1, 1, true);
+    setUpForTestCases(positionPID, velocityPID, motionMagicPID, enableTest, leds);
   }
-
-  public void setUpForTestCases(PID positionPID, PID velocityPID, PID motionMagicPID, LedSubsystem leds) {
+  public void setUpForTestCases(PID positionPID, PID velocityPID, PID motionMagicPID, boolean enableTest, LedSubsystem leds) {
     logf("Start of Test SRX Subsystem\n");
     setInverted(true);
     setSensorPhase(true);
     enableLimitSwitch(false, false);
-    positionPID.showPID();
-    velocityPID.showPID();
-    motionMagicPID.showPID();
+    //positionPID.showPID();
+    //velocityPID.showPID();
+    //motionMagicPID.showPID();
     // Motion Magic messes things up positionPID.setMotionMagicSRX(.5, 2.0);
     setPositionPID(positionPID, 0, FeedbackDevice.QuadEncoder); // set pid for SRX
     setVelocityPID(velocityPID, 1, FeedbackDevice.QuadEncoder);
     setMotionMagicPID(motionMagicPID, 2, FeedbackDevice.QuadEncoder);
     setEncoderPosition(0);
     setSmartTicks(5); // Set to update SmartDashBoard every 100 milli seconds
-    enableTestMode = true;
+    enableTestMode = enableTest;
     leds.setRangeOfColor(0, mode.ordinal(), 0, 127, 0);
   }
 
@@ -410,7 +408,7 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
 
   Modes mode = Modes.POSITION;
   boolean lastStart = false;
-  double lastValue = 0;
+  double setP = 0;
 
   void testCases(LedSubsystem leds) {
     CommandXboxController driveController = RobotContainer.driveController;
@@ -418,9 +416,8 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
     // Hiting the start button moves to the next control method
     boolean start = driveController.start().getAsBoolean();
     if (start && !lastStart) {
-      setVelocity(0.0);
       setSpeed(0.0);
-      setPos(0.0);
+      setEncoderPosition(0);
       mode = mode.next(); // Get the next mode
       logf("New Test Mode:%s Ordinal:%s\n", mode, mode.ordinal());
     }
@@ -428,9 +425,9 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
     switch (mode) {
       case POSITION:
         value = driveController.getHID().getPOV() * 200;
-        if (value >= 0.0 && lastValue != value) {
+        if (value >= 0.0 && setP != value) {
           setPos(value);
-          lastValue = value;
+          setP = value;
           logf("SRX set position:%.2f\n", value);
         }
         break;
@@ -439,22 +436,22 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
         if (value >= 0) {
           setVelocity(value);
           logf("SRX set velocity:%.2f\n", value);
-          lastValue = value;
+          setP = value;
         }
         break;
       case MOTIONMAGIC:
-        lastValue = 0.0;
+        setP = 0.0;
         break;
       case SPEED:
         value = robotContainer.getSpeedFromTriggers();
         if (Math.abs(value) > 0.05)
           logf("Set Test speed:%.2f\n", value);
         setSpeed(value);
-        lastValue = value;
+        setP = value;
         break;
     }
     leds.setAllColors(0, 0, 0);
     leds.setRangeOfColor(0, mode.ordinal(), 0, 127, 0);
-    SmartDashboard.putNumber(name + " SetP", lastValue);
+    SmartDashboard.putNumber("SetP", setP);
   }
 }

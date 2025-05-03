@@ -11,9 +11,6 @@ import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLimitSwitch;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.config.ClosedLoopConfig;
-import com.revrobotics.spark.config.SparkBaseConfig;
-import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
@@ -128,16 +125,14 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
                 .outputRange(-1, 1, ClosedLoopSlot.kSlot1);
 
         motorConfig.closedLoop
-                // Set PID values for motion magic position control in slot 2
-                .p(0.0001, ClosedLoopSlot.kSlot2)
+                // Set PID values for Magic motion position control in slot 2
+                .p(.4, ClosedLoopSlot.kSlot2)
                 .i(0, ClosedLoopSlot.kSlot2)
                 .d(0, ClosedLoopSlot.kSlot2)
-                // .velocityFF(1.0 / 5767, ClosedLoopSlot.kSlot2) // // Note 5767 is max speed
-                // for Velocity PIDs
                 .outputRange(-1, 1, ClosedLoopSlot.kSlot2);
 
         motorConfig.closedLoop
-                // Set PID values for motion magic velocty in slot 3
+                // Set PID values for Magic motion velocty in slot 3
                 .p(0.0001, ClosedLoopSlot.kSlot3)
                 .i(0, ClosedLoopSlot.kSlot3)
                 .d(0, ClosedLoopSlot.kSlot3)
@@ -145,17 +140,22 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
                 .outputRange(-1, 1, ClosedLoopSlot.kSlot3);
 
         motorConfig.closedLoop.maxMotion
-                // Set MAXMotion parameters for position control. We don't need to pass
-                // a closed loop slot, as it will default to slot 0.
-                .maxVelocity(4000, ClosedLoopSlot.kSlot1)
-                .maxAcceleration(3000, ClosedLoopSlot.kSlot1)
-                .allowedClosedLoopError(.05, ClosedLoopSlot.kSlot1)
-                // Set MAXMotion parameters for velocity control in slot 1
+                // Set Motion parameter for Velocity Control
+                .maxVelocity(5000, ClosedLoopSlot.kSlot1)
+                .maxAcceleration(5000, ClosedLoopSlot.kSlot1)
+                .allowedClosedLoopError(.1, ClosedLoopSlot.kSlot1)
+
+                // Set MAXMotion parameters for position control in slot 2
+                .maxAcceleration(4000, ClosedLoopSlot.kSlot2) // Was 500
+                .maxVelocity(4000, ClosedLoopSlot.kSlot2)
+                .allowedClosedLoopError(.1, ClosedLoopSlot.kSlot2)
+
+                // Set MAXMotion parameters for velocity control in slot 3
                 .maxAcceleration(3000, ClosedLoopSlot.kSlot3) // Was 500
                 .maxVelocity(6000, ClosedLoopSlot.kSlot3)
                 .allowedClosedLoopError(.1, ClosedLoopSlot.kSlot3);
 
-        /*
+        /*6
          * Apply the configuration to the SPARK MAX.
          *
          * kResetSafeParameters is used to get the SPARK MAX to a known state. This
@@ -280,7 +280,8 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
     }
 
     public void setMagicPositon(double position) {
-        motor.getClosedLoopController().setReference(position, ControlType.kMAXMotionPositionControl,  ClosedLoopSlot.kSlot3);
+        //motor.getClosedLoopController().setReference(position, ControlType.kMAXMotionPositionControl,  ClosedLoopSlot.kSlot3);
+        motor.getClosedLoopController().setReference(position, ControlType.kMAXMotionPositionControl,  ClosedLoopSlot.kSlot2);
     }
 
     public void setMagicVelocity(double velocity) {
@@ -349,13 +350,14 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
 
     @Override
     public void periodic() {
-        if (Robot.count % 5 == 0) {
-            SmartDashboard.putNumber(name + " Pos", getPos());
-            SmartDashboard.putNumber(name + " Rot", getPos() / positionConversionFactor);
-            SmartDashboard.putNumber(name + " Cur", round2(motor.getOutputCurrent()));
-            SmartDashboard.putNumber(name + " Vel", round2(getActualVelocity()));
-            SmartDashboard.putNumber(name + " RPM", round2(getActualVelocity() / velocityConversionFactor / 60));
+        if (Robot.count % 1 == 0) {
+            SmartDashboard.putNumber("Pos", getPos());
+            SmartDashboard.putNumber("Rot", getPos() / positionConversionFactor);
+            SmartDashboard.putNumber("Cur", round2(motor.getOutputCurrent()));
+            SmartDashboard.putNumber("Vel", round2(getActualVelocity()));
+            SmartDashboard.putNumber("RPM", round2(getActualVelocity() / velocityConversionFactor / 60));
             SmartDashboard.putString("Mode", mode.toString());
+            SmartDashboard.putNumber("Err", getError());
             logPeriodic();
             if (enableTestMode)
                 testCases();
@@ -378,7 +380,7 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
 
     Modes mode = Modes.POSITION;
     boolean lastStart = false;
-    double lastValue = 0;
+    double setP = 0;
 
     void testCases() {
         CommandXboxController driveController = RobotContainer.driveController;
@@ -386,9 +388,8 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
         // Hiting the start button moves to the next control method
         boolean start = driveController.start().getAsBoolean();
         if (start && !lastStart) {
-            setVelocity(0.0);
             setSpeed(0.0);
-            setPos(0.0);
+            relEncoder.setPosition(0.0);
             mode = mode.next(); // Get the next mode
             logf("New Test Mode:%s\n", mode);
         }
@@ -398,7 +399,7 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
                 value = driveController.getHID().getPOV() / 22.5;
                 if (value >= 0.0) {
                     setPos(value);
-                    lastValue = value;
+                    setP = value;
                     logf("Flex set position:%.2f\n", value);
                 }
                 break;
@@ -406,35 +407,35 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
                 value = driveController.getHID().getPOV() * 20;
                 if (value >= 0) {
                     setVelocity(value);
-                    lastValue = value;
+                    setP = value;
                     logf("Flex set velocity:%.2f\n", value);
                 }
                 break;
             case POSMAGIC:
-                value = driveController.getHID().getPOV() / 22.5;
+                value = driveController.getHID().getPOV() / 5.0;
                 if (value >= 0) {
                     setMagicPositon(value);
-                    lastValue = value;
-                    logf("Flex set positon Smart Motion:%.2f\n", value);
+                    setP = value;
+                    logf("Flex set positon Magic Motion:%.2f\n", value);
                 }
                 break;
             case VELMAGIC:
                 value = driveController.getHID().getPOV() * 20;
                 if (value >= 0) {
                     setMagicVelocity(value);
-                    lastValue = value;
-                    logf("Flex set velocity Smart Motion:%.2f\n", value);
+                    setP = value;
+                    logf("Flex set velocity Maguc Motion:%.2f\n", value);
                 }
                 break;
             case SPEED:
                value = robotContainer.getSpeedFromTriggers();
                 if (value > 0.05)
                     logf("Set Test speed:%.2f\n", value);
-                    lastValue = value;
+                    setP = value;
                 setSpeed(value);
                 break;
         }
-        SmartDashboard.putNumber("SetP", lastValue);
+        SmartDashboard.putNumber("SetP", setP);
         leds.setAllColors(0, 0, 0);
         leds.setRangeOfColor(0, mode.ordinal(), 0, 127, 0);
     }
