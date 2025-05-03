@@ -330,7 +330,8 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
 
     // Config the allowable closed-loop error, Closed-Loop output will be neutral
     // within this range. See Table in Section 17.2.1 for native units per rotation.
-    motor.configAllowableClosedloopError(0, pidIdx, Robot.config.kTimeoutMs);
+    int positionErr = 1;
+    motor.configAllowableClosedloopError(pidIdx, positionErr, Robot.config.kTimeoutMs);
   }
 
   public void setRampClosedLoop(double rate) {

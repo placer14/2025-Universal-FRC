@@ -111,16 +111,22 @@ public class RobotContainer {
         break;
       case MiniMini:
         MotorSRX redMotor = new MotorSRX("RedMotor", 10, -1, true);
-        PID positionPID = new PID("Pos", .08, 0, 0, 0, 0, -1, 1, true);
-        PID velocityPID = new PID("Vel", .005, 0, 0, 0, 1.5, -1, 1, true);
-        // Motion Magic messes things up positionPID.setMotionMagicSRX(.5, 2.0);
-        redMotor.setPositionPID(positionPID, 0, FeedbackDevice.QuadEncoder); // set pid for SRX
-        redMotor.setVelocityPID(velocityPID, 1, FeedbackDevice.QuadEncoder);
+        PID redPositionPID = new PID("RedPID Pos", .08, 0, 0, 0, 0, -1, 1, true);
+        PID redVelocityPID = new PID("RedPID Vel", .005, 0, 0, 0, 1.5, -1, 1, true);
+        // Motion Magic messes things up redPositionPID.setMotionMagicSRX(.5, 2.0);
+        redMotor.setPositionPID(redPositionPID, 0, FeedbackDevice.QuadEncoder); // set pid for SRX
+        redMotor.setVelocityPID(redVelocityPID, 1, FeedbackDevice.QuadEncoder);
         redMotor.setEncoderPosition(0);
         // redMotor.setTestMode(true);
         
 
         MotorFlex neoMotor = new MotorFlex("FlexMotor", 3, -1, true);
+        PID flexPositionPID = new PID("FlexPID Pos", .08, 0, 0, 0, 0, -1, 1, true);
+        PID flexVelocityPID = new PID("FlexPID Vel", .005, 0, 0, 0, 1.5, -1, 1, true);
+        // Motion Magic messes things up positionPID.setMotionMagicSRX(.5, 2.0);
+        neoMotor.setPositionPID(flexPositionPID, 0, FeedbackDevice.QuadEncoder); // set pid for SRX
+        neoMotor.setVelocityPID(flexVelocityPID, 1, FeedbackDevice.QuadEncoder);
+        neoMotor.setEncoderPosition(0);
         // redMotor.setUpForTestCases(leds);
         // redMotor.setLogging(true);
         //redMotor.setEncoderTicksPerRev(2048);

@@ -1,12 +1,10 @@
-package frc.robot.subsystems;
-
-import static frc.robot.Robot.robotContainer;
 import static frc.robot.utilities.Util.logf;
 import static frc.robot.utilities.Util.round2;
 
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.ClosedLoopSlot;
+import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
@@ -14,6 +12,8 @@ import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLimitSwitch;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.ClosedLoopConfig;
+import com.revrobotics.spark.config.SparkBaseConfig;
+import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
@@ -55,14 +55,18 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
     private double velocityConversionFactor = 1;
     private boolean enableTestMode = false;
     private SparkMaxConfig motorConfig;
+    private FeedbackDevice feedbackDevice = FeedbackDevice.QuadEncoder;
     //private ClosedLoopConfig closedLoopConfig;
     LedSubsystem leds;
+
+    private SparkFlexConfig m_posPIDConfig = new SparkFlexConfig();
 
     public MotorFlex(String name, int id, int followId, boolean logging) {
         this.name = name;
         this.followId = followId;
         this.myLogging = logging;
         motor = new SparkFlex(id, MotorType.kBrushless);
+        m_posPIDConfig.closedLoop.feedbackSensor(FeedbackSensor.kPrimaryEncoder);
         setConfig(motor);
 
         // setConfig(motor, -1, motorC);
@@ -124,7 +128,7 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
                 .outputRange(-1, 1, ClosedLoopSlot.kSlot1);
 
         motorConfig.closedLoop
-                // Set PID values for smart motion position control in slot 2
+                // Set PID values for motion magic position control in slot 2
                 .p(0.0001, ClosedLoopSlot.kSlot2)
                 .i(0, ClosedLoopSlot.kSlot2)
                 .d(0, ClosedLoopSlot.kSlot2)
@@ -133,7 +137,7 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
                 .outputRange(-1, 1, ClosedLoopSlot.kSlot2);
 
         motorConfig.closedLoop
-                // Set PID values for smart motion velocty in slot 3
+                // Set PID values for motion magic velocty in slot 3
                 .p(0.0001, ClosedLoopSlot.kSlot3)
                 .i(0, ClosedLoopSlot.kSlot3)
                 .d(0, ClosedLoopSlot.kSlot3)
@@ -229,7 +233,20 @@ public class MotorFlex extends SubsystemBase implements MotorDef {
     }
 
     // Config the sensor used for Primary PID and sensor direction
+    public void setPositionPID(PID pid, int pidIdx, FeedbackDevice feedback) {
+        feedbackDevice = feedback;
+        setPositionPID(pidIdx, pid);
+        PIDToMotor(pid, pidIdx, Robot.config.kTimeoutMs);
+    }
+
     public void setPositionPID(int pidIdx, PID pid) {
+        // create SparkBaseConfig
+        m_posPIDConfig.closedLoop.
+            pid(pid.kP, pid.kI, pid.kD).
+            outputRange(pid.kMinOutput, pid.kMaxOutput);
+        // set values for PID on config
+        // save config to motor
+        // set controller to use config
     }
 
     public void setRampClosedLoop(double rate) {
