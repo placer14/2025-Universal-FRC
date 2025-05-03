@@ -219,8 +219,6 @@ public class MotorSRX extends SubsystemBase implements MotorDef {
     motor.getSensorCollection().setQuadraturePosition((int) position, Robot.config.kTimeoutMs);
   }
 
-  
-
   public void forcePercentMode() {
     motor.set(ControlMode.PercentOutput, 0.001);
   }

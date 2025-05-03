@@ -20,6 +20,7 @@ import frc.robot.Config.RobotType;
 import frc.robot.subsystems.DrivetrainJaguar;
 import frc.robot.subsystems.DrivetrainSRX;
 import frc.robot.subsystems.DrivetrainSpark;
+import frc.robot.subsystems.DrivetrainTestSwerve;
 import frc.robot.subsystems.LedSubsystem;
 import frc.robot.subsystems.MotorFlex;
 import frc.robot.subsystems.MotorKraken;
@@ -113,11 +114,11 @@ public class RobotContainer {
         driveController.start().onTrue(miniMove);
         new ScheduleCommand(miniMove);
         break;
-      case MiniSRX: // Test mini
+      case MiniKeith: // Test mini
         // Use Talon SRX for drive train
         drivetrainSRX = new DrivetrainSRX(driveHID);
         // Setup to test Flex Motor
-        boolean testFlex = true;
+        boolean testFlex = false;
         if (testFlex) {
           MotorFlex mmotor = new MotorFlex("TestFlex", 10, -1, false);
           mmotor.setLeds(leds);
@@ -130,9 +131,9 @@ public class RobotContainer {
           mmotor.setLogging(true);
           mmotor.setTestMode(true);
         }
-        boolean testKraken = false;
+        boolean testKraken = true;
         if (testKraken) {
-          MotorKraken motorK = new MotorKraken("TestKrak", 14, -1, true);
+          MotorKraken motorK = new MotorKraken("TestKrak", 16, -1, true);
           motorK.setLogging(true);
           motorK.setTestMode(true);
         }
@@ -174,6 +175,9 @@ public class RobotContainer {
       case Mando: // Train engine
         // Use SparkMax motors for drive train
         new DrivetrainSpark(driveHID);
+        break;
+      case Sibling2025:
+        new DrivetrainTestSwerve(driveHID);
         break;
     }
     logf("Finished Creating RobotContainer\n");

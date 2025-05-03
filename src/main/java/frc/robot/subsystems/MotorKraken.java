@@ -1,16 +1,16 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot.subsystems;
 
-import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
+import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
 import static frc.robot.Robot.robotContainer;
 import static frc.robot.utilities.Util.logf;
 
 import com.ctre.phoenix6.StatusCode;
+import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -21,52 +21,35 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Robot;
 import frc.robot.RobotContainer;
 
-/**
- * The VM is configured to automatically run this class, and to call the
- * functions corresponding to
- * each mode, as described in the TimedRobot documentation. If you change the
- * name of this class or
- * the package after creating this project, you must also update the
- * build.gradle file in the
- * project.
- */
+// Motion Magic for Kraken has some code at
+// https://github.com/CrossTheRoadElec/Phoenix6-Examples/blob/main/java/MotionMagic/src/main/java/frc/robot/Robot.java
+
 public class MotorKraken extends SubsystemBase {
   private boolean myLogging = false;
   private boolean testMode = false;
   private String name = "";
   private final TalonFX motor;
-
-  /* Be able to switch which control request to use based on a button press */
-  /* Start at position 0, use slot 0 */
+  // Start at position 0, use slot 0 for Postion Control
   private final PositionVoltage positionVoltage = new PositionVoltage(0).withSlot(0);
-  /* Start at velocity 0, use slot 1 */
+  // Start at velocity 0, use slot 1 for Velocity Control
   private final VelocityVoltage velocityVoltage = new VelocityVoltage(0).withSlot(1);
+  // Start at position 0, use slot 2 for position motion magic
+  private final MotionMagicVoltage smartPositionVoltage = new MotionMagicVoltage(0).withSlot(2);
 
-  /* Start at position 0, use slot 2 */
-  // private final PositionTorqueCurrentFOC m_positionTorque = new
-  // PositionTorqueCurrentFOC(0).withSlot(2);
-
-  /* Keep a brake request so we can disable the motor */
-  // private final NeutralOut brake;
-
-  /**
-   * This function is run when the robot is first started up and should be used
-   * for any
-   * initialization code.
-   */
   public MotorKraken(String name, int id, int followId, boolean logging) {
     this.name = name;
     // Keep a brake request so we can disable the motor
     // brake = new NeutralOut();
     motor = new TalonFX(id);
-    configKraken(motor, false);
-
-    /* Make sure we start at 0 */
+    configKraken(motor);
+    /* Make sure we start the encoder at positon 0 */
     motor.setPosition(0);
   }
 
-  private void configKraken(TalonFX motor, boolean velocityTorque) {
+  private void configKraken(TalonFX motor) {
     TalonFXConfiguration configs = new TalonFXConfiguration();
+
+    // Set slot 0 for position PID
     configs.Slot0.kP = 2.4; // An error of 1 rotation results in 2.4 V output
     configs.Slot0.kI = 0; // No output for integrated error
     configs.Slot0.kD = 0.1; // A velocity of 1 rps results in 0.1 V output
@@ -74,17 +57,7 @@ public class MotorKraken extends SubsystemBase {
     configs.Voltage.withPeakForwardVoltage(Volts.of(12))
         .withPeakReverseVoltage(Volts.of(-12));
 
-    configs.Slot2.kP = 60; // An error of 1 rotation results in 60 A output
-    configs.Slot2.kI = 0; // No output for integrated error
-    configs.Slot2.kD = 6; // A velocity of 1 rps results in 6 A output
-    // Peak output of 120 A
-    configs.TorqueCurrent.withPeakForwardTorqueCurrent(Amps.of(120))
-        .withPeakReverseTorqueCurrent(Amps.of(-120));
-
-    /*
-     * Voltage-based velocity requires a velocity feed forward to account for the
-     * back-emf of the motor
-     */
+    // * Voltage-based velocity requires a velocity feed forward
     configs.Slot1.kS = 0.1; // To account for friction, add 0.1 V of static feedforward
     configs.Slot1.kV = 0.12; // Kraken X60 is a 500 kV motor, 500 rpm per V = 8.333 rps per V, 1/8.33 = 0.12
                              // volts / rotation per second
@@ -92,19 +65,26 @@ public class MotorKraken extends SubsystemBase {
     configs.Slot1.kI = 0; // No output for integrated error
     configs.Slot1.kD = 0; // No output for error derivative
 
-    if (velocityTorque) {
-      /*
-       * Torque-based velocity does not require a velocity feed forward, as torque
-       * will accelerate the rotor up to the desired velocity by itself
-       */
-      configs.Slot2.kS = 2.5; // To account for friction, add 2.5 A of static feedforward
-      configs.Slot2.kP = 5; // An error of 1 rotation per second results in 5 A output
-      configs.Slot2.kI = 0; // No output for integrated error
-      configs.Slot2.kD = 0; // No output for error derivative
-      // Peak output of 40 A
-      configs.TorqueCurrent.withPeakForwardTorqueCurrent(Amps.of(40))
-          .withPeakReverseTorqueCurrent(Amps.of(-40));
-    }
+    /* Configure gear ratio */
+    FeedbackConfigs fdb = configs.Feedback;
+    fdb.SensorToMechanismRatio = 12.8; // 12.8 rotor rotations per mechanism rotation
+
+    // Configure Motion Magic 5 (mechanism) rotations per second cruise
+    configs.MotionMagic.withMotionMagicCruiseVelocity(RotationsPerSecond.of(5));
+    // Take approximately 0.5 seconds to reach max vel
+    configs.MotionMagic.withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(10));
+    // Take approximately 0.1 seconds to reach max accel
+    configs.MotionMagic.withMotionMagicJerk(RotationsPerSecondPerSecond.per(Second).of(100));
+
+    configs.Slot2.kS = 0.25; // Add 0.25 V output to overcome static friction
+    configs.Slot2.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
+    configs.Slot2.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
+    configs.Slot2.kP = 60; // A position error of 0.2 rotations results in 12 V output
+    configs.Slot2.kI = 0; // No output for integrated error
+    configs.Slot2.kD = 0.5; // A velocity error of 1 rps results in 0.5 V output
+    // configs.MotionMagic.withMotionMagicCruiseVelocity(10.0); // Reduced from 20.0
+    // configs.MotionMagic.withMotionMagicAcceleration(20.0); // Reduced from 40.0
+    // configs.MotionMagic.withMotionMagicJerk(2000.0); // Reduced from 4000.0
 
     StatusCode status = motor.getConfigurator().apply(configs);
     if (!status.isOK()) {
@@ -121,12 +101,19 @@ public class MotorKraken extends SubsystemBase {
     testMode = value;
   }
 
-  private void setSpeed(double value) {
+  // Set speed as a value from -1 to 1
+  public void setSpeed(double value) {
     motor.set(value);
   }
 
+  // Set the position of the motor to a value
   private void setPos(double value) {
     motor.setControl(positionVoltage.withPosition(value));
+  }
+
+  // Set the postion of the motor to a value using Magic Motion
+  private void setPositionMotionMagic(double value) {
+    motor.setControl(smartPositionVoltage.withPosition(value).withSlot(2));
   }
 
   private void setVelocity(double value) {
@@ -136,23 +123,6 @@ public class MotorKraken extends SubsystemBase {
 
   @Override
   public void periodic() {
-    // double desiredRotations = m_joystick.getLeftY() * 10; // Go for plus/minus 10
-    // rotations
-    // if (Math.abs(desiredRotations) <= 0.1) { // Joystick deadzone
-    // desiredRotations = 0.0;
-    // }
-
-    // if (m_joystick.getLeftBumperButton()) {
-    // /* Use position voltage */
-    // motor.setControl(m_positionVoltage.withPosition(desiredRotations));
-    // } else if (m_joystick.getRightBumperButton()) {
-    // /* Use position torque */
-    // motor.setControl(m_positionTorque.withPosition(desiredRotations));
-    // } else {
-    // /* Disable the motor instead */
-    // motor.setControl(m_brake);
-    // }
-
     double err = motor.getClosedLoopError().getValueAsDouble();
     double pos = motor.getPosition().getValueAsDouble();
     double velocity = motor.getVelocity().getValueAsDouble();
@@ -164,7 +134,8 @@ public class MotorKraken extends SubsystemBase {
     SmartDashboard.putNumber(name + " Cur", current);
     SmartDashboard.putString("Mode:", mode.toString());
     if (Math.abs(velocity) > 0.05 && myLogging && Robot.count % 10 == 0) {
-      logf("%s velocity:%.2f RPM:%.2f current:%.2f pos:%.2f err:%.2f\n", name, velocity, velocity* 60.0, current, pos, err);
+      logf("%s velocity:%.2f RPM:%.2f current:%.2f pos:%.2f err:%.2f\n", name, velocity, velocity * 60.0, current, pos,
+          err);
     }
     if (testMode)
       testCases();
@@ -207,7 +178,8 @@ public class MotorKraken extends SubsystemBase {
         }
         break;
       case VELOCITY:
-        value = driveController.getHID().getPOV() / (270.0/100.0);
+        // POV 270 degrees is 100
+        value = driveController.getHID().getPOV() / (270.0 / 100.0);
         if (lastValue != value) {
           lastValue = value;
           if (value >= 0) {
@@ -218,6 +190,15 @@ public class MotorKraken extends SubsystemBase {
         }
         break;
       case MOTIONMAGIC:
+        value = driveController.getHID().getPOV() / 10.0;
+        if (lastValue != value) {
+          lastValue = value;
+          if (value >= 0) {
+            SmartDashboard.putNumber(name + " SetP", value);
+            setPositionMotionMagic(value);
+            logf("%s set magic mition position:%.2f\n", name, value);
+          }
+        }
         break;
       case SPEED:
         double mySpeed = robotContainer.getSpeedFromTriggers();
