@@ -128,7 +128,7 @@ public class RobotContainer {
         Command redMoveCmd = Commands.run(() -> redMotor.setSpeed(driveController.getLeftTriggerAxis()), redMotor);
         Command neoMoveCmd = Commands.run(() -> neoMotor.setSpeed(driveController.getRightTriggerAxis()), neoMotor);
         new ScheduleCommand(Commands.parallel(redMoveCmd, neoMoveCmd).ignoringDisable(true)).schedule();
-        Command miniMove = Commands.run(() -> mmmotor.setSpeed(driveController.getLeftTriggerAxis()), mmmotor);
+        Command miniMove = Commands.run(() -> neoMotor.setSpeed(driveController.getLeftTriggerAxis()),neoMotor);
         driveController.start().onTrue(miniMove);
         new ScheduleCommand(miniMove);
         break;
