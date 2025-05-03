@@ -118,7 +118,7 @@ public class PID extends SubsystemBase {
     }
   }
 
-  void showPID() {
+  public void showPID() {
     // display PID coefficients on SmartDashboard
     if (smart) {
       //SmartDashboard.putString("PID Name", name);
